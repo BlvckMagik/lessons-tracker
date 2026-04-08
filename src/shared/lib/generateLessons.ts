@@ -1,14 +1,44 @@
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { prisma } from './prisma';
 import { resolveStudentPrices } from './priceHelper';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
+
 const DEFAULT_WEEKS_AHEAD = 12;
 const MIN_FUTURE_WEEKS = 4;
+const DEFAULT_TIMEZONE = 'Europe/Kyiv';
 
-function toLocalDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+function isValidIanaTimeZone(z: string): boolean {
+  try {
+    Intl.DateTimeFormat('en-US', { timeZone: z });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function resolveLessonTimeZone(raw: string | null | undefined): string {
+  if (raw && typeof raw === 'string') {
+    const t = raw.trim();
+    if (t && isValidIanaTimeZone(t)) return t;
+  }
+  return DEFAULT_TIMEZONE;
+}
+
+function wallClockToUtc(
+  dateYmd: string,
+  hour: number,
+  minute: number,
+  tz: string,
+): dayjs.Dayjs {
+  const h = String(hour).padStart(2, '0');
+  const m = String(minute).padStart(2, '0');
+  return dayjs.tz(`${dateYmd} ${h}:${m}:00`, 'YYYY-MM-DD HH:mm:ss', tz).utc();
 }
 
 export async function generateLessonInstances(recurringLessonId: number, weeksAhead: number = DEFAULT_WEEKS_AHEAD) {
@@ -19,42 +49,43 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
 
   if (!recurring || !recurring.active) return 0;
 
+  const tz = resolveLessonTimeZone(recurring.timeZone);
   const days = recurring.daysOfWeek.split(',').map(Number);
   const [startH, startM] = recurring.startTime.split(':').map(Number);
   const [endH, endM] = recurring.endTime.split(':').map(Number);
 
+  const nowUtc = dayjs.utc();
+
   const existingDates = new Set(
-    recurring.lessons.map((l) => toLocalDateString(l.startTime))
+    recurring.lessons.map((l) => dayjs.utc(l.startTime).tz(tz).format('YYYY-MM-DD')),
   );
 
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endDate = recurring.repeatUntil
-    ? new Date(Math.min(recurring.repeatUntil.getTime(), today.getTime() + weeksAhead * 7 * 86400000))
-    : new Date(today.getTime() + weeksAhead * 7 * 86400000);
+  let cursor = dayjs.tz(nowUtc.valueOf(), tz).startOf('day');
+  const weeksEnd = dayjs.tz(nowUtc.valueOf(), tz).add(weeksAhead, 'week').endOf('day');
+  let rangeEnd = weeksEnd;
+  if (recurring.repeatUntil) {
+    const until = dayjs.utc(recurring.repeatUntil).tz(tz).endOf('day');
+    rangeEnd = until.isBefore(weeksEnd) ? until : weeksEnd;
+  }
 
-  const lessonsToCreate: Array<{
-    startTime: Date;
-    endTime: Date;
-  }> = [];
+  const lessonsToCreate: Array<{ startTime: Date; endTime: Date }> = [];
 
-  const cursor = new Date(today);
-  while (cursor <= endDate) {
-    const dayOfWeek = cursor.getDay();
-    if (days.includes(dayOfWeek)) {
-      const dateStr = toLocalDateString(cursor);
+  while (!cursor.isAfter(rangeEnd)) {
+    const dow = cursor.day();
+    if (days.includes(dow)) {
+      const dateStr = cursor.format('YYYY-MM-DD');
       if (!existingDates.has(dateStr)) {
-        const start = new Date(cursor);
-        start.setHours(startH, startM, 0, 0);
-        const end = new Date(cursor);
-        end.setHours(endH, endM, 0, 0);
-
-        if (start >= now || start >= today) {
-          lessonsToCreate.push({ startTime: start, endTime: end });
+        const startUtc = wallClockToUtc(dateStr, startH, startM, tz);
+        const endUtc = wallClockToUtc(dateStr, endH, endM, tz);
+        if (endUtc.isAfter(startUtc) && !startUtc.isBefore(nowUtc)) {
+          lessonsToCreate.push({
+            startTime: startUtc.toDate(),
+            endTime: endUtc.toDate(),
+          });
         }
       }
     }
-    cursor.setDate(cursor.getDate() + 1);
+    cursor = cursor.add(1, 'day');
   }
 
   const studentIds = recurring.students.map((s) => s.studentId);

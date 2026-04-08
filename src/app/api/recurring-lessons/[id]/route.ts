@@ -3,6 +3,15 @@ import { prisma } from '@/shared/lib/prisma';
 
 type Params = { params: Promise<{ id: string }> };
 
+function isValidIanaTimeZone(z: string): boolean {
+  try {
+    Intl.DateTimeFormat('en-US', { timeZone: z });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function GET(_req: NextRequest, { params }: Params) {
   const { id } = await params;
   const recurring = await prisma.recurringLesson.findUnique({
@@ -26,6 +35,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.subject) data.subject = body.subject;
   if (body.pricePerStudent !== undefined) data.pricePerStudent = body.pricePerStudent;
   if (body.repeatUntil !== undefined) data.repeatUntil = body.repeatUntil ? new Date(body.repeatUntil) : null;
+  if (typeof body.timeZone === 'string' && isValidIanaTimeZone(body.timeZone.trim())) {
+    data.timeZone = body.timeZone.trim();
+  }
 
   const recurring = await prisma.recurringLesson.update({
     where: { id: Number(id) },

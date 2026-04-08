@@ -131,6 +131,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
         daysOfWeek: recurringDays.join(','),
         startTime: rs.format('HH:mm'),
         endTime: re.format('HH:mm'),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         type,
         subject,
         studentIds: selectedStudents.map((s) => s.id),

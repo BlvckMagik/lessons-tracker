@@ -2,6 +2,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { generateLessonInstances } from '@/shared/lib/generateLessons';
 
+const DEFAULT_TIMEZONE = 'Europe/Kyiv';
+
+function isValidIanaTimeZone(z: string): boolean {
+  try {
+    Intl.DateTimeFormat('en-US', { timeZone: z });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function parseTimeZone(body: { timeZone?: unknown }): string {
+  if (typeof body.timeZone === 'string' && isValidIanaTimeZone(body.timeZone.trim())) {
+    return body.timeZone.trim();
+  }
+  return DEFAULT_TIMEZONE;
+}
+
+type CreateRecurringBody = {
+  daysOfWeek: string;
+  startTime: string;
+  endTime: string;
+  type: string;
+  subject: string;
+  studentIds: number[];
+  repeatUntil?: string;
+  timeZone?: unknown;
+};
+
 export async function GET() {
   const recurring = await prisma.recurringLesson.findMany({
     include: { students: { include: { student: true } }, lessons: { select: { id: true } } },
@@ -11,21 +40,24 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const body = (await req.json()) as CreateRecurringBody;
+
+  const createData = {
+    daysOfWeek: body.daysOfWeek,
+    startTime: body.startTime,
+    endTime: body.endTime,
+    timeZone: parseTimeZone(body),
+    type: body.type,
+    subject: body.subject,
+    pricePerStudent: 0,
+    repeatUntil: body.repeatUntil ? new Date(body.repeatUntil) : null,
+    students: {
+      create: body.studentIds.map((studentId) => ({ studentId })),
+    },
+  };
 
   const recurring = await prisma.recurringLesson.create({
-    data: {
-      daysOfWeek: body.daysOfWeek,
-      startTime: body.startTime,
-      endTime: body.endTime,
-      type: body.type,
-      subject: body.subject,
-      pricePerStudent: 0,
-      repeatUntil: body.repeatUntil ? new Date(body.repeatUntil) : null,
-      students: {
-        create: (body.studentIds as number[]).map((studentId) => ({ studentId })),
-      },
-    },
+    data: createData,
     include: { students: { include: { student: true } } },
   });
 

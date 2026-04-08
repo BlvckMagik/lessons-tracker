@@ -58,6 +58,7 @@ model RecurringLesson {
   daysOfWeek      String
   startTime       String
   endTime         String
+  timeZone        String                   @default("Europe/Kyiv")
   type            String
   subject         String
   pricePerStudent Int                      @default(0)

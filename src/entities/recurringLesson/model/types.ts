@@ -13,6 +13,7 @@ export interface RecurringLesson {
   daysOfWeek: string;
   startTime: string;
   endTime: string;
+  timeZone: string;
   type: LessonType;
   subject: LessonSubject;
   pricePerStudent: number;
@@ -28,6 +29,7 @@ export interface CreateRecurringLessonDto {
   daysOfWeek: string;
   startTime: string;
   endTime: string;
+  timeZone: string;
   type: LessonType;
   subject: LessonSubject;
   studentIds: number[];
