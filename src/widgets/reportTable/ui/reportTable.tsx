@@ -32,6 +32,10 @@ import {
   alpha,
   Fade,
   Skeleton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -46,6 +50,7 @@ import {
   LESSON_SUBJECT_LABELS,
   LESSON_TYPE_LABELS,
   LESSON_STATUS_LABELS,
+  CHARGEABLE_STATUSES,
 } from '@/shared/config/constants';
 
 const columnHelper = createColumnHelper<StudentReport>();
@@ -227,11 +232,45 @@ function ReportTableSkeleton() {
   );
 }
 
+type TypeFilter = 'ALL' | 'INDIVIDUAL' | 'GROUP';
+
 export function ReportTable() {
   const { data: reports = [], isLoading } = useGetReportsQuery();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('ALL');
+
+  const filteredReports = useMemo(() => {
+    if (typeFilter === 'ALL') return reports;
+
+    return reports
+      .map((report) => {
+        const lessons = report.lessons.filter((l) => l.type === typeFilter);
+        const completed = lessons.filter((l) => l.status === 'COMPLETED').length;
+        const missed = lessons.filter((l) => l.status === 'MISSED').length;
+        const cancelled = lessons.filter((l) => l.status === 'CANCELLED').length;
+        const totalCharged = lessons
+          .filter((l) => (CHARGEABLE_STATUSES as readonly string[]).includes(l.status))
+          .reduce((sum, l) => sum + l.pricePerStudent, 0);
+        const totalPaid = lessons
+          .filter((l) => l.paid && (CHARGEABLE_STATUSES as readonly string[]).includes(l.status))
+          .reduce((sum, l) => sum + l.pricePerStudent, 0);
+
+        return {
+          ...report,
+          lessons,
+          totalLessons: lessons.length,
+          completed,
+          missed,
+          cancelled,
+          totalCharged,
+          totalPaid,
+          totalOwed: totalCharged - totalPaid,
+        };
+      })
+      .filter((r) => r.totalLessons > 0);
+  }, [reports, typeFilter]);
 
   const columns = useMemo(
     () => [
@@ -370,7 +409,7 @@ export function ReportTable() {
   );
 
   const table = useReactTable({
-    data: reports,
+    data: filteredReports,
     columns,
     state: { sorting, globalFilter },
     onSortingChange: setSorting,
@@ -396,22 +435,36 @@ export function ReportTable() {
         </Box>
       </Stack>
 
-      <TextField
-        placeholder="Пошук учня..."
-        size="small"
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        sx={{ mb: 2.5, width: 320 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.25)' }} />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2.5 }}>
+        <TextField
+          placeholder="Пошук учня..."
+          size="small"
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          sx={{ width: 320 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.25)' }} />
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Тип занять</InputLabel>
+          <Select
+            value={typeFilter}
+            label="Тип занять"
+            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+          >
+            <MenuItem value="ALL">Усі заняття</MenuItem>
+            <MenuItem value="INDIVIDUAL">Індивідуальні</MenuItem>
+            <MenuItem value="GROUP">Групові</MenuItem>
+          </Select>
+        </FormControl>
+      </Stack>
 
       <TableContainer component={Paper}>
         <Table>
