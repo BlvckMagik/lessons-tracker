@@ -1,11 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useCallback, useRef } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import type { EventInput, DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import { useState, useMemo, useCallback, useRef } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import type {
+  EventInput,
+  DateSelectArg,
+  EventClickArg,
+} from "@fullcalendar/core";
+import type { DateClickArg } from "@fullcalendar/interaction";
 import {
   Box,
   Paper,
@@ -19,46 +24,90 @@ import {
   alpha,
   Fade,
   Skeleton,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
-import EditIcon from '@mui/icons-material/Edit';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import PeopleIcon from '@mui/icons-material/People';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import { useGetLessonsQuery, useDeleteLessonMutation, useDeleteFutureLessonsMutation } from '@/entities/lesson/api/lessonApi';
-import { useDeferredDelete } from '@/features/deferredDelete';
-import type { Lesson } from '@/entities/lesson/model/types';
-import { CreateLessonDialog } from '@/features/createLesson/ui/createLessonDialog';
-import { EditLessonDialog } from '@/features/editLesson/ui/editLessonDialog';
-import { LessonStatusButtons } from '@/features/lessonStatus/ui/lessonStatusButtons';
+} from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
+import EditIcon from "@mui/icons-material/Edit";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import PeopleIcon from "@mui/icons-material/People";
+import RepeatIcon from "@mui/icons-material/Repeat";
+import {
+  useGetLessonsQuery,
+  useDeleteLessonMutation,
+  useDeleteFutureLessonsMutation,
+} from "@/entities/lesson/api/lessonApi";
+import { useDeferredDelete } from "@/features/deferredDelete";
+import type { Lesson } from "@/entities/lesson/model/types";
+import { CreateLessonDialog } from "@/features/createLesson/ui/createLessonDialog";
+import { EditLessonDialog } from "@/features/editLesson/ui/editLessonDialog";
+import { LessonStatusButtons } from "@/features/lessonStatus/ui/lessonStatusButtons";
 import {
   LESSON_TYPE_LABELS,
   LESSON_SUBJECT_LABELS,
   LESSON_STATUSES,
-} from '@/shared/config/constants';
+} from "@/shared/config/constants";
 
 const statusColorMap: Record<string, string> = {
-  PLANNED: '#6366f1',
-  COMPLETED: '#34d399',
-  MISSED: '#fbbf24',
-  CANCELLED: '#f87171',
+  PLANNED: "#6366f1",
+  COMPLETED: "#34d399",
+  MISSED: "#fbbf24",
+  CANCELLED: "#f87171",
 };
 
 function CalendarSkeleton() {
   return (
-    <Paper sx={{ p: 2.5, border: `1px solid ${alpha('#fff', 0.06)}` }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+    <Paper sx={{ p: 2.5, border: `1px solid ${alpha("#fff", 0.06)}` }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 3 }}
+      >
         <Stack direction="row" spacing={1}>
-          <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rounded" width={80} height={36} sx={{ borderRadius: 2 }} />
+          <Skeleton
+            variant="rounded"
+            width={36}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
+          <Skeleton
+            variant="rounded"
+            width={36}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
+          <Skeleton
+            variant="rounded"
+            width={80}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
         </Stack>
-        <Skeleton variant="rounded" width={180} height={28} sx={{ borderRadius: 1 }} />
+        <Skeleton
+          variant="rounded"
+          width={180}
+          height={28}
+          sx={{ borderRadius: 1 }}
+        />
         <Stack direction="row" spacing={1}>
-          <Skeleton variant="rounded" width={72} height={36} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rounded" width={72} height={36} sx={{ borderRadius: 2 }} />
-          <Skeleton variant="rounded" width={56} height={36} sx={{ borderRadius: 2 }} />
+          <Skeleton
+            variant="rounded"
+            width={72}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
+          <Skeleton
+            variant="rounded"
+            width={72}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
+          <Skeleton
+            variant="rounded"
+            width={56}
+            height={36}
+            sx={{ borderRadius: 2 }}
+          />
         </Stack>
       </Stack>
 
@@ -96,7 +145,10 @@ export function LessonCalendar() {
   const { scheduleDelete } = useDeferredDelete();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectInfo, setSelectInfo] = useState<{ start: Date; end: Date } | null>(null);
+  const [selectInfo, setSelectInfo] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
 
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
@@ -105,13 +157,15 @@ export function LessonCalendar() {
   const calendarRef = useRef<FullCalendar>(null);
 
   const selectedLesson = selectedLessonId
-    ? lessons.find((l) => l.id === selectedLessonId) ?? null
+    ? (lessons.find((l) => l.id === selectedLessonId) ?? null)
     : null;
 
   const events: EventInput[] = useMemo(
     () =>
       lessons.map((lesson) => {
-        const studentNames = lesson.students.map((s) => s.student.name).join(', ');
+        const studentNames = lesson.students
+          .map((s) => s.student.name)
+          .join(", ");
         const isPast = new Date(lesson.endTime) < new Date();
         const needsAction = isPast && lesson.status === LESSON_STATUSES.PLANNED;
 
@@ -120,18 +174,29 @@ export function LessonCalendar() {
           title: `${LESSON_SUBJECT_LABELS[lesson.subject]} — ${studentNames}`,
           start: lesson.startTime,
           end: lesson.endTime,
-          backgroundColor: needsAction ? 'transparent' : statusColorMap[lesson.status],
-          borderColor: needsAction ? '#818cf8' : 'transparent',
-          classNames: needsAction ? ['fc-event-needs-action'] : [],
+          backgroundColor: needsAction
+            ? "transparent"
+            : statusColorMap[lesson.status],
+          borderColor: needsAction ? "#818cf8" : "transparent",
+          classNames: needsAction ? ["fc-event-needs-action"] : [],
           extendedProps: { lesson },
         };
       }),
-    [lessons]
+    [lessons],
   );
 
   const handleSelect = useCallback((info: DateSelectArg) => {
     setSelectInfo({ start: info.start, end: info.end });
     setDialogOpen(true);
+  }, []);
+
+  const handleDateClick = useCallback((info: DateClickArg) => {
+    if (!info.view.type.startsWith("timeGrid")) return;
+    const start = info.date;
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    setSelectInfo({ start, end });
+    setDialogOpen(true);
+    calendarRef.current?.getApi().unselect();
   }, []);
 
   const handleEventClick = useCallback((info: EventClickArg) => {
@@ -146,7 +211,7 @@ export function LessonCalendar() {
     setPopoverAnchor(null);
     setSelectedLessonId(null);
     scheduleDelete({
-      message: 'Урок буде видалено…',
+      message: "Урок буде видалено…",
       execute: () => {
         void deleteLesson(id);
       },
@@ -159,7 +224,7 @@ export function LessonCalendar() {
     setPopoverAnchor(null);
     setSelectedLessonId(null);
     scheduleDelete({
-      message: 'Уроки серії від цього моменту буде видалено…',
+      message: "Уроки серії від цього моменту буде видалено…",
       execute: () => {
         void deleteFutureLessons(id);
       },
@@ -175,132 +240,134 @@ export function LessonCalendar() {
     }
   };
 
-  const isPast = selectedLesson ? new Date(selectedLesson.endTime) < new Date() : false;
+  const isPast = selectedLesson
+    ? new Date(selectedLesson.endTime) < new Date()
+    : false;
 
   if (isLoading) {
     return <CalendarSkeleton />;
   }
 
   return (
-    <Box sx={{ height: '100%' }}>
+    <Box sx={{ height: "100%" }}>
       <Paper
         sx={{
           p: 2.5,
-          height: '100%',
-          border: `1px solid ${alpha('#fff', 0.06)}`,
-          '& .fc': {
-            height: '100%',
-            '--fc-border-color': alpha('#fff', 0.06),
-            '--fc-neutral-bg-color': alpha('#fff', 0.02),
-            '--fc-page-bg-color': 'transparent',
-            '--fc-today-bg-color': alpha('#6366f1', 0.06),
+          height: "100%",
+          border: `1px solid ${alpha("#fff", 0.06)}`,
+          "& .fc": {
+            height: "100%",
+            "--fc-border-color": alpha("#fff", 0.06),
+            "--fc-neutral-bg-color": alpha("#fff", 0.02),
+            "--fc-page-bg-color": "transparent",
+            "--fc-today-bg-color": alpha("#6366f1", 0.06),
           },
-          '& .fc-theme-standard td, & .fc-theme-standard th': {
-            borderColor: alpha('#fff', 0.06),
+          "& .fc-theme-standard td, & .fc-theme-standard th": {
+            borderColor: alpha("#fff", 0.06),
           },
-          '& .fc-theme-standard .fc-scrollgrid': {
-            borderColor: alpha('#fff', 0.06),
+          "& .fc-theme-standard .fc-scrollgrid": {
+            borderColor: alpha("#fff", 0.06),
           },
-          '& .fc-col-header-cell': {
-            backgroundColor: alpha('#fff', 0.02),
-            '& .fc-col-header-cell-cushion': {
-              padding: '10px 4px',
+          "& .fc-col-header-cell": {
+            backgroundColor: alpha("#fff", 0.02),
+            "& .fc-col-header-cell-cushion": {
+              padding: "10px 4px",
               fontWeight: 600,
-              fontSize: '0.75rem',
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
+              fontSize: "0.75rem",
+              letterSpacing: "0.05em",
+              textTransform: "uppercase",
             },
           },
-          '& .fc-daygrid-day-number, & .fc-col-header-cell-cushion': {
-            color: 'rgba(255,255,255,0.6)',
-            textDecoration: 'none',
+          "& .fc-daygrid-day-number, & .fc-col-header-cell-cushion": {
+            color: "rgba(255,255,255,0.6)",
+            textDecoration: "none",
           },
-          '& .fc-button': {
-            backgroundColor: alpha('#fff', 0.06),
-            borderColor: alpha('#fff', 0.08),
-            color: 'rgba(255,255,255,0.7)',
+          "& .fc-button": {
+            backgroundColor: alpha("#fff", 0.06),
+            borderColor: alpha("#fff", 0.08),
+            color: "rgba(255,255,255,0.7)",
             fontWeight: 600,
-            fontSize: '0.8rem',
-            padding: '6px 14px',
-            borderRadius: '8px !important',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: alpha('#fff', 0.1),
-              color: '#fff',
+            fontSize: "0.8rem",
+            padding: "6px 14px",
+            borderRadius: "8px !important",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              backgroundColor: alpha("#fff", 0.1),
+              color: "#fff",
             },
-            '&:focus': {
-              boxShadow: `0 0 0 2px ${alpha('#6366f1', 0.3)}`,
+            "&:focus": {
+              boxShadow: `0 0 0 2px ${alpha("#6366f1", 0.3)}`,
             },
           },
-          '& .fc-button-active, & .fc-button-active:hover': {
-            backgroundColor: `${alpha('#6366f1', 0.2)} !important`,
-            borderColor: `${alpha('#6366f1', 0.3)} !important`,
-            color: '#818cf8 !important',
+          "& .fc-button-active, & .fc-button-active:hover": {
+            backgroundColor: `${alpha("#6366f1", 0.2)} !important`,
+            borderColor: `${alpha("#6366f1", 0.3)} !important`,
+            color: "#818cf8 !important",
           },
-          '& .fc-today-button': {
-            backgroundColor: `${alpha('#6366f1', 0.12)} !important`,
-            borderColor: `${alpha('#6366f1', 0.2)} !important`,
-            color: '#818cf8 !important',
-            '&:disabled': {
+          "& .fc-today-button": {
+            backgroundColor: `${alpha("#6366f1", 0.12)} !important`,
+            borderColor: `${alpha("#6366f1", 0.2)} !important`,
+            color: "#818cf8 !important",
+            "&:disabled": {
               opacity: 0.3,
             },
           },
-          '& .fc-toolbar-title': {
+          "& .fc-toolbar-title": {
             fontWeight: 700,
-            fontSize: '1.2rem !important',
-            letterSpacing: '-0.02em',
+            fontSize: "1.2rem !important",
+            letterSpacing: "-0.02em",
           },
-          '& .fc-timegrid-slot': {
-            height: '3em',
+          "& .fc-timegrid-slot": {
+            height: "3em",
           },
-          '& .fc-event': {
-            cursor: 'pointer',
-            borderRadius: '8px !important',
-            fontSize: '0.78rem',
+          "& .fc-event": {
+            cursor: "pointer",
+            borderRadius: "8px !important",
+            fontSize: "0.78rem",
             fontWeight: 500,
-            padding: '2px 6px',
-            border: 'none !important',
-            boxShadow: `0 2px 8px ${alpha('#000', 0.2)}`,
-            transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-            '&:hover': {
-              transform: 'scale(1.02)',
-              boxShadow: `0 4px 16px ${alpha('#000', 0.3)}`,
+            padding: "2px 6px",
+            border: "none !important",
+            boxShadow: `0 2px 8px ${alpha("#000", 0.2)}`,
+            transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            "&:hover": {
+              transform: "scale(1.02)",
+              boxShadow: `0 4px 16px ${alpha("#000", 0.3)}`,
             },
           },
-          '& .fc-event-needs-action': {
-            border: '2px solid #818cf8 !important',
-            backgroundColor: `${alpha('#6366f1', 0.06)} !important`,
-            animation: 'pulseNeedsAction 2s ease-in-out infinite',
-            '&:hover': {
-              backgroundColor: `${alpha('#6366f1', 0.12)} !important`,
+          "& .fc-event-needs-action": {
+            border: "2px solid #818cf8 !important",
+            backgroundColor: `${alpha("#6366f1", 0.06)} !important`,
+            animation: "pulseNeedsAction 2s ease-in-out infinite",
+            "&:hover": {
+              backgroundColor: `${alpha("#6366f1", 0.12)} !important`,
             },
           },
-          '& .fc-timegrid-slot-label-cushion, & .fc-timegrid-axis-cushion': {
-            color: 'rgba(255,255,255,0.3)',
-            fontSize: '0.75rem',
+          "& .fc-timegrid-slot-label-cushion, & .fc-timegrid-axis-cushion": {
+            color: "rgba(255,255,255,0.3)",
+            fontSize: "0.75rem",
           },
-          '& .fc-timegrid-now-indicator-line': {
-            borderColor: '#f87171',
+          "& .fc-timegrid-now-indicator-line": {
+            borderColor: "#f87171",
             borderWidth: 2,
           },
-          '& .fc-timegrid-now-indicator-arrow': {
-            borderColor: '#f87171',
+          "& .fc-timegrid-now-indicator-arrow": {
+            borderColor: "#f87171",
           },
-          '& .fc-highlight': {
-            backgroundColor: `${alpha('#6366f1', 0.12)} !important`,
+          "& .fc-highlight": {
+            backgroundColor: `${alpha("#6366f1", 0.12)} !important`,
           },
-          '& .fc-daygrid-day-top': {
-            padding: '4px',
+          "& .fc-daygrid-day-top": {
+            padding: "4px",
           },
-          '& .fc-button-group': {
-            gap: '4px',
-            '& .fc-button': {
-              borderRadius: '8px !important',
+          "& .fc-button-group": {
+            gap: "4px",
+            "& .fc-button": {
+              borderRadius: "8px !important",
             },
           },
-          '& .fc-toolbar': {
-            marginBottom: '20px !important',
-            gap: '12px',
+          "& .fc-toolbar": {
+            marginBottom: "20px !important",
+            gap: "12px",
           },
         }}
       >
@@ -309,9 +376,9 @@ export function LessonCalendar() {
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,timeGridWeek,timeGridDay',
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
           locale="uk"
           firstDay={1}
@@ -320,18 +387,22 @@ export function LessonCalendar() {
           editable={false}
           events={events}
           select={handleSelect}
+          dateClick={handleDateClick}
           eventClick={handleEventClick}
           allDaySlot={false}
+          slotDuration="01:00:00"
+          snapDuration="01:00:00"
+          slotLabelInterval="01:00:00"
           slotMinTime="07:00:00"
-          slotMaxTime="22:00:00"
+          slotMaxTime="23:00:00"
           height="auto"
           expandRows
           nowIndicator
           buttonText={{
-            today: 'Сьогодні',
-            month: 'Місяць',
-            week: 'Тиждень',
-            day: 'День',
+            today: "Сьогодні",
+            month: "Місяць",
+            week: "Тиждень",
+            day: "День",
           }}
         />
       </Paper>
@@ -353,13 +424,17 @@ export function LessonCalendar() {
           setPopoverAnchor(null);
           setSelectedLessonId(null);
         }}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         TransitionComponent={Fade}
         transitionDuration={200}
       >
         {selectedLesson && (
           <Box sx={{ p: 2.5, minWidth: 300 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="flex-start"
+            >
               <Box>
                 <Typography variant="h6" fontSize="1rem" fontWeight={700}>
                   {LESSON_SUBJECT_LABELS[selectedLesson.subject]}
@@ -369,29 +444,29 @@ export function LessonCalendar() {
                     label={LESSON_TYPE_LABELS[selectedLesson.type]}
                     size="small"
                     variant="outlined"
-                    sx={{ borderColor: alpha('#fff', 0.1), fontSize: '0.7rem' }}
+                    sx={{ borderColor: alpha("#fff", 0.1), fontSize: "0.7rem" }}
                   />
                   <Chip
                     label={`${selectedLesson.students.reduce((sum, s) => sum + (s.price || selectedLesson.pricePerStudent), 0)} грн`}
                     size="small"
                     sx={{
-                      background: alpha('#6366f1', 0.15),
-                      color: '#818cf8',
-                      fontSize: '0.7rem',
+                      background: alpha("#6366f1", 0.15),
+                      color: "#818cf8",
+                      fontSize: "0.7rem",
                       fontWeight: 700,
                     }}
                   />
                   {selectedLesson.recurringLessonId && (
                     <Chip
-                      icon={<RepeatIcon sx={{ fontSize: '12px !important' }} />}
+                      icon={<RepeatIcon sx={{ fontSize: "12px !important" }} />}
                       label="Регулярний"
                       size="small"
                       sx={{
-                        backgroundColor: alpha('#6366f1', 0.08),
-                        color: '#818cf8',
-                        fontSize: '0.65rem',
+                        backgroundColor: alpha("#6366f1", 0.08),
+                        color: "#818cf8",
+                        fontSize: "0.65rem",
                         fontWeight: 600,
-                        border: 'none',
+                        border: "none",
                       }}
                     />
                   )}
@@ -402,8 +477,11 @@ export function LessonCalendar() {
                   size="small"
                   onClick={handleEdit}
                   sx={{
-                    color: 'rgba(255,255,255,0.3)',
-                    '&:hover': { color: '#818cf8', backgroundColor: alpha('#6366f1', 0.1) },
+                    color: "rgba(255,255,255,0.3)",
+                    "&:hover": {
+                      color: "#818cf8",
+                      backgroundColor: alpha("#6366f1", 0.1),
+                    },
                   }}
                 >
                   <EditIcon fontSize="small" />
@@ -412,8 +490,11 @@ export function LessonCalendar() {
                   size="small"
                   onClick={handleDelete}
                   sx={{
-                    color: 'rgba(255,255,255,0.3)',
-                    '&:hover': { color: '#f87171', backgroundColor: alpha('#f87171', 0.1) },
+                    color: "rgba(255,255,255,0.3)",
+                    "&:hover": {
+                      color: "#f87171",
+                      backgroundColor: alpha("#f87171", 0.1),
+                    },
                   }}
                 >
                   <DeleteIcon fontSize="small" />
@@ -423,19 +504,28 @@ export function LessonCalendar() {
 
             <Stack spacing={0.75} sx={{ mt: 1.5 }}>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <AccessTimeIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.3)' }} />
+                <AccessTimeIcon
+                  sx={{ fontSize: 16, color: "rgba(255,255,255,0.3)" }}
+                />
                 <Typography variant="body2" fontSize="0.8rem">
-                  {new Date(selectedLesson.startTime).toLocaleString('uk-UA')} —{' '}
-                  {new Date(selectedLesson.endTime).toLocaleTimeString('uk-UA', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {new Date(selectedLesson.startTime).toLocaleString("uk-UA")} —{" "}
+                  {new Date(selectedLesson.endTime).toLocaleTimeString(
+                    "uk-UA",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    },
+                  )}
                 </Typography>
               </Stack>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <PeopleIcon sx={{ fontSize: 16, color: 'rgba(255,255,255,0.3)' }} />
+                <PeopleIcon
+                  sx={{ fontSize: 16, color: "rgba(255,255,255,0.3)" }}
+                />
                 <Typography variant="body2" fontSize="0.8rem">
-                  {selectedLesson.students.map((s) => s.student.name).join(', ')}
+                  {selectedLesson.students
+                    .map((s) => s.student.name)
+                    .join(", ")}
                 </Typography>
               </Stack>
             </Stack>
@@ -453,16 +543,16 @@ export function LessonCalendar() {
                   fullWidth
                   variant="outlined"
                   size="small"
-                  startIcon={<EditIcon sx={{ fontSize: '16px !important' }} />}
+                  startIcon={<EditIcon sx={{ fontSize: "16px !important" }} />}
                   onClick={handleEdit}
                   sx={{
-                    borderColor: alpha('#fff', 0.1),
-                    color: 'rgba(255,255,255,0.6)',
-                    fontSize: '0.8rem',
-                    '&:hover': {
-                      borderColor: alpha('#6366f1', 0.3),
-                      backgroundColor: alpha('#6366f1', 0.06),
-                      color: '#818cf8',
+                    borderColor: alpha("#fff", 0.1),
+                    color: "rgba(255,255,255,0.6)",
+                    fontSize: "0.8rem",
+                    "&:hover": {
+                      borderColor: alpha("#6366f1", 0.3),
+                      backgroundColor: alpha("#6366f1", 0.06),
+                      color: "#818cf8",
                     },
                   }}
                 >
@@ -473,16 +563,18 @@ export function LessonCalendar() {
                     fullWidth
                     variant="outlined"
                     size="small"
-                    startIcon={<DeleteSweepIcon sx={{ fontSize: '16px !important' }} />}
+                    startIcon={
+                      <DeleteSweepIcon sx={{ fontSize: "16px !important" }} />
+                    }
                     onClick={handleDeleteFuture}
                     sx={{
-                      borderColor: alpha('#f87171', 0.15),
-                      color: 'rgba(255,255,255,0.5)',
-                      fontSize: '0.78rem',
-                      '&:hover': {
-                        borderColor: alpha('#f87171', 0.4),
-                        backgroundColor: alpha('#f87171', 0.06),
-                        color: '#f87171',
+                      borderColor: alpha("#f87171", 0.15),
+                      color: "rgba(255,255,255,0.5)",
+                      fontSize: "0.78rem",
+                      "&:hover": {
+                        borderColor: alpha("#f87171", 0.4),
+                        backgroundColor: alpha("#f87171", 0.06),
+                        color: "#f87171",
                       },
                     }}
                   >
