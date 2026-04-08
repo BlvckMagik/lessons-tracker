@@ -87,7 +87,7 @@ function StudentTableSkeleton() {
             {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
               <TableRow key={i}>
                 <TableCell>
-                  <Skeleton variant="text" width={100 + Math.random() * 60} />
+                  <Skeleton variant="text" width={100 + (i * 13) % 56} />
                 </TableCell>
                 <TableCell>
                   <Skeleton variant="text" width={110} />

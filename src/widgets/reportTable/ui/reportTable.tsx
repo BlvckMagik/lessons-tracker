@@ -200,7 +200,7 @@ function ReportTableSkeleton() {
                   <Skeleton variant="circular" width={28} height={28} />
                 </TableCell>
                 <TableCell>
-                  <Skeleton variant="text" width={90 + Math.random() * 50} />
+                  <Skeleton variant="text" width={90 + (i * 11) % 48} />
                 </TableCell>
                 <TableCell>
                   <Skeleton variant="text" width={24} />
