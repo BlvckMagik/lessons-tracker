@@ -1,0 +1,38 @@
+export const PRICE_INDIVIDUAL = 200;
+export const PRICE_GROUP = 50;
+
+export const LESSON_TYPES = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  GROUP: 'GROUP',
+} as const;
+
+export const LESSON_SUBJECTS = {
+  ENGLISH: 'ENGLISH',
+  GERMAN: 'GERMAN',
+} as const;
+
+export const LESSON_STATUSES = {
+  PLANNED: 'PLANNED',
+  COMPLETED: 'COMPLETED',
+  MISSED: 'MISSED',
+  CANCELLED: 'CANCELLED',
+} as const;
+
+export const LESSON_TYPE_LABELS: Record<string, string> = {
+  INDIVIDUAL: 'Індивідуальне',
+  GROUP: 'Групове',
+};
+
+export const LESSON_SUBJECT_LABELS: Record<string, string> = {
+  ENGLISH: 'Англійська',
+  GERMAN: 'Німецька',
+};
+
+export const LESSON_STATUS_LABELS: Record<string, string> = {
+  PLANNED: 'Заплановано',
+  COMPLETED: 'Проведено',
+  MISSED: 'Пропущено',
+  CANCELLED: 'Скасовано',
+};
+
+export const CHARGEABLE_STATUSES = [LESSON_STATUSES.COMPLETED, LESSON_STATUSES.MISSED];

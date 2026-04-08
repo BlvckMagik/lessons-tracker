@@ -1,0 +1,57 @@
+---
+description: Lessons Tracker project conventions
+globs: "**/*.{ts,tsx}"
+alwaysApply: true
+---
+
+# Lessons Tracker — Project Rules
+
+## Tech Stack
+- Next.js 15 (App Router)
+- React 19
+- MUI v6 (Material UI) — dark theme only
+- Redux Toolkit + RTK Query (with optimistic updates)
+- TanStack React Table v8
+- Prisma + SQLite
+- FullCalendar for calendar views
+- TypeScript strict mode
+
+## Architecture: Feature-Sliced Design (FSD)
+```
+src/
+  app/        — Next.js App Router, layout, providers, theme
+  widgets/    — composite UI blocks (calendar, tables, sidebar)
+  features/   — user-facing interactions (create lesson, create student, etc.)
+  entities/   — business entities (student, lesson) with RTK Query API slices
+  shared/     — shared utilities, base API, constants, UI primitives
+```
+
+### Import rules
+- shared → no upper layer imports
+- entities → shared only
+- features → entities, shared
+- widgets → features, entities, shared
+- app → all layers
+
+## Naming Conventions
+- Files: camelCase (e.g., `lessonCalendar.tsx`, `studentApi.ts`)
+- Components: PascalCase exports
+- Types/Interfaces: PascalCase with descriptive names
+- API routes: kebab-case folders (Next.js convention)
+
+## Language
+- UI text: Ukrainian
+- Code (variables, functions, types): English
+- No comments in code
+
+## Database
+- Prisma with SQLite (file-based, persistent)
+- Schema in `prisma/schema.prisma`
+
+## Key Business Rules
+- Individual lesson price: 200 UAH
+- Group lesson price: 50 UAH per student
+- Lesson statuses: PLANNED, COMPLETED, MISSED, CANCELLED
+- COMPLETED and MISSED — charge the student
+- CANCELLED — no charge
+- Payment tracking per student per lesson
