@@ -76,7 +76,10 @@ export const lessonApi = baseApi.injectEndpoints({
         const patches = dispatch(
           lessonApi.util.updateQueryData('getLessons', undefined, (draft) => {
             const lesson = draft.find((l) => l.id === id);
-            if (lesson) lesson.status = status;
+            if (lesson) {
+              lesson.status = status;
+              lesson.students.forEach((s) => { s.status = status; });
+            }
           })
         );
         try {
@@ -87,6 +90,35 @@ export const lessonApi = baseApi.injectEndpoints({
       },
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Lesson', id },
+        { type: 'Report' },
+      ],
+    }),
+
+    updateStudentStatus: build.mutation<Lesson, { lessonId: number; studentId: number; status: LessonStatus }>({
+      query: ({ lessonId, studentId, status }) => ({
+        url: `lessons/${lessonId}/student-status`,
+        method: 'PATCH',
+        body: { studentId, status },
+      }),
+      async onQueryStarted({ lessonId, studentId, status }, { dispatch, queryFulfilled }) {
+        const patches = dispatch(
+          lessonApi.util.updateQueryData('getLessons', undefined, (draft) => {
+            const lesson = draft.find((l) => l.id === lessonId);
+            if (lesson) {
+              const ls = lesson.students.find((s) => s.studentId === studentId);
+              if (ls) ls.status = status;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patches.undo();
+        }
+      },
+      invalidatesTags: (_result, _error, { lessonId }) => [
+        { type: 'Lesson', id: lessonId },
+        { type: 'Lesson', id: 'LIST' },
         { type: 'Report' },
       ],
     }),
@@ -131,6 +163,7 @@ export const {
   useDeleteLessonMutation,
   useDeleteFutureLessonsMutation,
   useUpdateLessonStatusMutation,
+  useUpdateStudentStatusMutation,
   useUpdatePaymentMutation,
   useGetReportsQuery,
 } = lessonApi;

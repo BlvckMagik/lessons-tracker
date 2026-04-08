@@ -93,6 +93,14 @@ export const theme = createTheme({
             transform: 'translateY(0)',
           },
         },
+        '@keyframes pulseNeedsAction': {
+          '0%, 100%': {
+            boxShadow: `0 0 0 0 rgba(129, 140, 248, 0.4)`,
+          },
+          '50%': {
+            boxShadow: `0 0 12px 4px rgba(129, 140, 248, 0.25)`,
+          },
+        },
       },
     },
     MuiPaper: {

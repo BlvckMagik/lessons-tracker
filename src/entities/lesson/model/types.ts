@@ -9,6 +9,7 @@ export interface LessonStudent {
   lessonId: number;
   studentId: number;
   paid: boolean;
+  status: LessonStatus | null;
   student: Student;
 }
 
@@ -65,6 +66,7 @@ export interface LessonReportItem {
   subject: LessonSubject;
   startTime: string;
   status: LessonStatus;
+  studentStatus: LessonStatus | null;
   pricePerStudent: number;
   paid: boolean;
   charged: boolean;

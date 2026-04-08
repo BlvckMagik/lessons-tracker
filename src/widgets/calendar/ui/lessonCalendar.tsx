@@ -97,10 +97,14 @@ export function LessonCalendar() {
   const [selectInfo, setSelectInfo] = useState<{ start: Date; end: Date } | null>(null);
 
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
+
+  const selectedLesson = selectedLessonId
+    ? lessons.find((l) => l.id === selectedLessonId) ?? null
+    : null;
 
   const events: EventInput[] = useMemo(
     () =>
@@ -114,8 +118,9 @@ export function LessonCalendar() {
           title: `${LESSON_SUBJECT_LABELS[lesson.subject]} — ${studentNames}`,
           start: lesson.startTime,
           end: lesson.endTime,
-          backgroundColor: needsAction ? '#f59e0b' : statusColorMap[lesson.status],
-          borderColor: 'transparent',
+          backgroundColor: needsAction ? 'transparent' : statusColorMap[lesson.status],
+          borderColor: needsAction ? '#818cf8' : 'transparent',
+          classNames: needsAction ? ['fc-event-needs-action'] : [],
           extendedProps: { lesson },
         };
       }),
@@ -128,7 +133,8 @@ export function LessonCalendar() {
   }, []);
 
   const handleEventClick = useCallback((info: EventClickArg) => {
-    setSelectedLesson(info.event.extendedProps.lesson as Lesson);
+    const lesson = info.event.extendedProps.lesson as Lesson;
+    setSelectedLessonId(lesson.id);
     setPopoverAnchor(info.el);
   }, []);
 
@@ -136,7 +142,7 @@ export function LessonCalendar() {
     if (selectedLesson) {
       await deleteLesson(selectedLesson.id);
       setPopoverAnchor(null);
-      setSelectedLesson(null);
+      setSelectedLessonId(null);
     }
   };
 
@@ -144,7 +150,7 @@ export function LessonCalendar() {
     if (selectedLesson) {
       await deleteFutureLessons(selectedLesson.id);
       setPopoverAnchor(null);
-      setSelectedLesson(null);
+      setSelectedLessonId(null);
     }
   };
 
@@ -152,7 +158,7 @@ export function LessonCalendar() {
     if (selectedLesson) {
       setEditingLesson(selectedLesson);
       setPopoverAnchor(null);
-      setSelectedLesson(null);
+      setSelectedLessonId(null);
       setEditDialogOpen(true);
     }
   };
@@ -249,6 +255,14 @@ export function LessonCalendar() {
               boxShadow: `0 4px 16px ${alpha('#000', 0.3)}`,
             },
           },
+          '& .fc-event-needs-action': {
+            border: '2px solid #818cf8 !important',
+            backgroundColor: `${alpha('#6366f1', 0.06)} !important`,
+            animation: 'pulseNeedsAction 2s ease-in-out infinite',
+            '&:hover': {
+              backgroundColor: `${alpha('#6366f1', 0.12)} !important`,
+            },
+          },
           '& .fc-timegrid-slot-label-cushion, & .fc-timegrid-axis-cushion': {
             color: 'rgba(255,255,255,0.3)',
             fontSize: '0.75rem',
@@ -325,7 +339,7 @@ export function LessonCalendar() {
         anchorEl={popoverAnchor}
         onClose={() => {
           setPopoverAnchor(null);
-          setSelectedLesson(null);
+          setSelectedLessonId(null);
         }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         TransitionComponent={Fade}
@@ -417,10 +431,7 @@ export function LessonCalendar() {
             {isPast && (
               <>
                 <Divider sx={{ my: 1.5 }} />
-                <LessonStatusButtons
-                  lessonId={selectedLesson.id}
-                  currentStatus={selectedLesson.status}
-                />
+                <LessonStatusButtons lesson={selectedLesson} />
               </>
             )}
 

@@ -16,14 +16,16 @@ export async function GET() {
 
   const reports = students.map((student) => {
     const lessons = student.lessons.map((ls) => {
-      const charged = CHARGEABLE_STATUSES.includes(ls.lesson.status);
+      const effectiveStatus = ls.status ?? ls.lesson.status;
+      const charged = CHARGEABLE_STATUSES.includes(effectiveStatus);
       return {
         lessonId: ls.lessonId,
         lessonStudentId: ls.id,
         type: ls.lesson.type,
         subject: ls.lesson.subject,
         startTime: ls.lesson.startTime.toISOString(),
-        status: ls.lesson.status,
+        status: effectiveStatus,
+        studentStatus: ls.status,
         pricePerStudent: ls.lesson.pricePerStudent,
         paid: ls.paid,
         charged,

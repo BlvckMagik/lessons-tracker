@@ -38,6 +38,7 @@ model LessonStudent {
   lessonId  Int
   studentId Int
   paid      Boolean @default(false)
+  status    String?
   lesson    Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
