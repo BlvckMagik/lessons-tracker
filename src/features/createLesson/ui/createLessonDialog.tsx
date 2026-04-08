@@ -19,12 +19,20 @@ import {
   Box,
   Slide,
   alpha,
+  Switch,
+  FormControlLabel,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import type { TransitionProps } from '@mui/material/transitions';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from 'dayjs';
+import RepeatIcon from '@mui/icons-material/Repeat';
 import { useGetStudentsQuery } from '@/entities/student/api/studentApi';
 import { useCreateLessonMutation } from '@/entities/lesson/api/lessonApi';
+import { useCreateRecurringLessonMutation } from '@/entities/recurringLesson/api/recurringLessonApi';
 import type { LessonType, LessonSubject } from '@/entities/lesson/model/types';
 import type { Student } from '@/entities/student/model/types';
 import {
@@ -43,6 +51,8 @@ const SlideTransition = forwardRef(function SlideTransition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+const DAY_LABELS = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -57,29 +67,61 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
   const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
 
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringDays, setRecurringDays] = useState<number[]>([]);
+  const [recurringStartTime, setRecurringStartTime] = useState<Dayjs | null>(null);
+  const [recurringEndTime, setRecurringEndTime] = useState<Dayjs | null>(null);
+  const [repeatUntil, setRepeatUntil] = useState<Dayjs | null>(null);
+
   const { data: students = [] } = useGetStudentsQuery();
-  const [createLesson, { isLoading }] = useCreateLessonMutation();
+  const [createLesson, { isLoading: isCreating }] = useCreateLessonMutation();
+  const [createRecurring, { isLoading: isCreatingRecurring }] = useCreateRecurringLessonMutation();
+  const isLoading = isCreating || isCreatingRecurring;
 
   useEffect(() => {
     if (open) {
-      setStartTime(defaultStart ? dayjs(defaultStart) : dayjs().startOf('hour').add(1, 'hour'));
-      setEndTime(defaultEnd ? dayjs(defaultEnd) : dayjs().startOf('hour').add(2, 'hour'));
+      const defStart = defaultStart ? dayjs(defaultStart) : dayjs().startOf('hour').add(1, 'hour');
+      const defEnd = defaultEnd ? dayjs(defaultEnd) : dayjs().startOf('hour').add(2, 'hour');
+      setStartTime(defStart);
+      setEndTime(defEnd);
+      setRecurringStartTime(defStart);
+      setRecurringEndTime(defEnd);
+      if (defaultStart) {
+        setRecurringDays([defaultStart.getDay()]);
+      }
     }
   }, [open, defaultStart, defaultEnd]);
 
   const price = type === LESSON_TYPES.INDIVIDUAL ? PRICE_INDIVIDUAL : PRICE_GROUP;
 
   const handleSubmit = async () => {
-    if (!startTime || !endTime || selectedStudents.length === 0) return;
+    if (selectedStudents.length === 0) return;
 
-    await createLesson({
-      type,
-      subject,
-      startTime: startTime.toISOString(),
-      endTime: endTime.toISOString(),
-      studentIds: selectedStudents.map((s) => s.id),
-      pricePerStudent: price,
-    });
+    if (isRecurring) {
+      if (recurringDays.length === 0 || !recurringStartTime || !recurringEndTime) return;
+
+      await createRecurring({
+        daysOfWeek: recurringDays.join(','),
+        startTime: recurringStartTime.format('HH:mm'),
+        endTime: recurringEndTime.format('HH:mm'),
+        type,
+        subject,
+        pricePerStudent: price,
+        studentIds: selectedStudents.map((s) => s.id),
+        repeatUntil: repeatUntil?.toISOString(),
+      });
+    } else {
+      if (!startTime || !endTime) return;
+
+      await createLesson({
+        type,
+        subject,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        studentIds: selectedStudents.map((s) => s.id),
+        pricePerStudent: price,
+      });
+    }
 
     handleClose();
   };
@@ -90,8 +132,17 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
     setStartTime(null);
     setEndTime(null);
     setSelectedStudents([]);
+    setIsRecurring(false);
+    setRecurringDays([]);
+    setRecurringStartTime(null);
+    setRecurringEndTime(null);
+    setRepeatUntil(null);
     onClose();
   };
+
+  const canSubmit = isRecurring
+    ? recurringDays.length > 0 && recurringStartTime && recurringEndTime && selectedStudents.length > 0
+    : startTime && endTime && selectedStudents.length > 0;
 
   return (
     <Dialog
@@ -101,16 +152,44 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
       fullWidth
       TransitionComponent={SlideTransition}
     >
-      <DialogTitle sx={{ pb: 0.5 }}>
+      <DialogTitle component="div" sx={{ pb: 0.5 }}>
         <Typography variant="h6" fontSize="1.1rem" fontWeight={700}>
-          Новий урок
+          {isRecurring ? 'Регулярний урок' : 'Новий урок'}
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.35)', mt: 0.25 }}>
-          Заплануйте новий урок у розкладі
+          {isRecurring
+            ? 'Створіть щотижневий розклад уроків'
+            : 'Заплануйте новий урок у розкладі'}
         </Typography>
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                color="primary"
+              />
+            }
+            label={
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <RepeatIcon sx={{ fontSize: 18, color: isRecurring ? '#818cf8' : 'rgba(255,255,255,0.4)' }} />
+                <Typography fontSize="0.875rem" fontWeight={500}>
+                  Повторювати щотижня
+                </Typography>
+              </Stack>
+            }
+            sx={{
+              p: 1,
+              borderRadius: 2.5,
+              backgroundColor: isRecurring ? alpha('#6366f1', 0.08) : alpha('#fff', 0.02),
+              border: `1px solid ${isRecurring ? alpha('#6366f1', 0.2) : alpha('#fff', 0.06)}`,
+              transition: 'all 0.2s ease',
+              mx: 0,
+            }}
+          />
+
           <Stack direction="row" spacing={2}>
             <FormControl fullWidth>
               <InputLabel>Тип</InputLabel>
@@ -126,13 +205,10 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 }}
               >
                 {Object.entries(LESSON_TYPE_LABELS).map(([key, label]) => (
-                  <MenuItem key={key} value={key}>
-                    {label}
-                  </MenuItem>
+                  <MenuItem key={key} value={key}>{label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-
             <FormControl fullWidth>
               <InputLabel>Предмет</InputLabel>
               <Select
@@ -141,32 +217,96 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 onChange={(e) => setSubject(e.target.value as LessonSubject)}
               >
                 {Object.entries(LESSON_SUBJECT_LABELS).map(([key, label]) => (
-                  <MenuItem key={key} value={key}>
-                    {label}
-                  </MenuItem>
+                  <MenuItem key={key} value={key}>{label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Stack>
 
-          <Stack direction="row" spacing={2}>
-            <DateTimePicker
-              label="Початок"
-              value={startTime}
-              onChange={setStartTime}
-              ampm={false}
-              minutesStep={5}
-              sx={{ flex: 1 }}
-            />
-            <DateTimePicker
-              label="Кінець"
-              value={endTime}
-              onChange={setEndTime}
-              ampm={false}
-              minutesStep={5}
-              sx={{ flex: 1 }}
-            />
-          </Stack>
+          {isRecurring ? (
+            <>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1, color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                  Дні тижня
+                </Typography>
+                <ToggleButtonGroup
+                  value={recurringDays}
+                  onChange={(_e, val) => val && setRecurringDays(val)}
+                  size="small"
+                  sx={{
+                    gap: 0.5,
+                    '& .MuiToggleButton-root': {
+                      borderRadius: '8px !important',
+                      border: `1px solid ${alpha('#fff', 0.1)} !important`,
+                      px: 1.5,
+                      py: 0.75,
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      color: 'rgba(255,255,255,0.4)',
+                      '&.Mui-selected': {
+                        backgroundColor: alpha('#6366f1', 0.2),
+                        color: '#818cf8',
+                        borderColor: `${alpha('#6366f1', 0.3)} !important`,
+                      },
+                    },
+                  }}
+                >
+                  {DAY_LABELS.map((label, idx) => (
+                    <ToggleButton key={idx} value={idx}>{label}</ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </Box>
+
+              <Stack direction="row" spacing={2}>
+                <TimePicker
+                  label="Початок"
+                  value={recurringStartTime}
+                  onChange={setRecurringStartTime}
+                  ampm={false}
+                  minutesStep={5}
+                  sx={{ flex: 1 }}
+                />
+                <TimePicker
+                  label="Кінець"
+                  value={recurringEndTime}
+                  onChange={setRecurringEndTime}
+                  ampm={false}
+                  minutesStep={5}
+                  sx={{ flex: 1 }}
+                />
+              </Stack>
+
+              <DatePicker
+                label="Повторювати до (необов'язково)"
+                value={repeatUntil}
+                onChange={setRepeatUntil}
+                minDate={dayjs()}
+                slotProps={{
+                  textField: { fullWidth: true },
+                  field: { clearable: true },
+                }}
+              />
+            </>
+          ) : (
+            <Stack direction="row" spacing={2}>
+              <DateTimePicker
+                label="Початок"
+                value={startTime}
+                onChange={setStartTime}
+                ampm={false}
+                minutesStep={5}
+                sx={{ flex: 1 }}
+              />
+              <DateTimePicker
+                label="Кінець"
+                value={endTime}
+                onChange={setEndTime}
+                ampm={false}
+                minutesStep={5}
+                sx={{ flex: 1 }}
+              />
+            </Stack>
+          )}
 
           {type === LESSON_TYPES.INDIVIDUAL ? (
             <Autocomplete
@@ -190,11 +330,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                     {...getTagProps({ index })}
                     key={option.id}
                     size="small"
-                    sx={{
-                      backgroundColor: alpha('#6366f1', 0.15),
-                      color: '#818cf8',
-                      fontWeight: 600,
-                    }}
+                    sx={{ backgroundColor: alpha('#6366f1', 0.15), color: '#818cf8', fontWeight: 600 }}
                   />
                 ))
               }
@@ -214,8 +350,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
               Вартість: {price} грн {type === LESSON_TYPES.GROUP ? 'з кожного' : ''}
               {type === LESSON_TYPES.GROUP && selectedStudents.length > 0 && (
                 <Box component="span" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {' '}
-                  (разом: {price * selectedStudents.length} грн)
+                  {' '}(разом: {price * selectedStudents.length} грн)
                 </Box>
               )}
             </Typography>
@@ -223,18 +358,15 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button
-          onClick={handleClose}
-          sx={{ color: 'rgba(255,255,255,0.5)' }}
-        >
+        <Button onClick={handleClose} sx={{ color: 'rgba(255,255,255,0.5)' }}>
           Скасувати
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
-          disabled={!startTime || !endTime || selectedStudents.length === 0 || isLoading}
+          disabled={!canSubmit || isLoading}
         >
-          Створити
+          {isRecurring ? 'Створити розклад' : 'Створити'}
         </Button>
       </DialogActions>
     </Dialog>

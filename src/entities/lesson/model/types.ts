@@ -20,6 +20,7 @@ export interface Lesson {
   endTime: string;
   status: LessonStatus;
   pricePerStudent: number;
+  recurringLessonId: number | null;
   createdAt: string;
   updatedAt: string;
   students: LessonStudent[];
@@ -41,6 +42,7 @@ export interface UpdateLessonDto {
   endTime?: string;
   studentIds?: number[];
   pricePerStudent?: number;
+  status?: LessonStatus;
 }
 
 export interface StudentReport {

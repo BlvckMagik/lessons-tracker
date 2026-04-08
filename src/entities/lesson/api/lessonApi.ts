@@ -58,6 +58,14 @@ export const lessonApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: 'Lesson', id: 'LIST' }, { type: 'Report' }],
     }),
 
+    deleteFutureLessons: build.mutation<{ deleted: number }, number>({
+      query: (id) => ({
+        url: `lessons/${id}/delete-future`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [{ type: 'Lesson', id: 'LIST' }, { type: 'Report' }, { type: 'RecurringLesson' as const }],
+    }),
+
     updateLessonStatus: build.mutation<Lesson, { id: number; status: LessonStatus }>({
       query: ({ id, status }) => ({
         url: `lessons/${id}/status`,
@@ -121,6 +129,7 @@ export const {
   useCreateLessonMutation,
   useUpdateLessonMutation,
   useDeleteLessonMutation,
+  useDeleteFutureLessonsMutation,
   useUpdateLessonStatusMutation,
   useUpdatePaymentMutation,
   useGetReportsQuery,

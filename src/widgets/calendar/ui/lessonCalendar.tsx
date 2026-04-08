@@ -14,17 +14,22 @@ import {
   Stack,
   Chip,
   IconButton,
+  Button,
   Divider,
   alpha,
   Fade,
   Skeleton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import EditIcon from '@mui/icons-material/Edit';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PeopleIcon from '@mui/icons-material/People';
-import { useGetLessonsQuery, useDeleteLessonMutation } from '@/entities/lesson/api/lessonApi';
+import RepeatIcon from '@mui/icons-material/Repeat';
+import { useGetLessonsQuery, useDeleteLessonMutation, useDeleteFutureLessonsMutation } from '@/entities/lesson/api/lessonApi';
 import type { Lesson } from '@/entities/lesson/model/types';
 import { CreateLessonDialog } from '@/features/createLesson/ui/createLessonDialog';
+import { EditLessonDialog } from '@/features/editLesson/ui/editLessonDialog';
 import { LessonStatusButtons } from '@/features/lessonStatus/ui/lessonStatusButtons';
 import {
   LESSON_TYPE_LABELS,
@@ -86,12 +91,15 @@ function CalendarSkeleton() {
 export function LessonCalendar() {
   const { data: lessons = [], isLoading } = useGetLessonsQuery();
   const [deleteLesson] = useDeleteLessonMutation();
+  const [deleteFutureLessons] = useDeleteFutureLessonsMutation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<{ start: Date; end: Date } | null>(null);
 
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
 
   const events: EventInput[] = useMemo(
@@ -129,6 +137,23 @@ export function LessonCalendar() {
       await deleteLesson(selectedLesson.id);
       setPopoverAnchor(null);
       setSelectedLesson(null);
+    }
+  };
+
+  const handleDeleteFuture = async () => {
+    if (selectedLesson) {
+      await deleteFutureLessons(selectedLesson.id);
+      setPopoverAnchor(null);
+      setSelectedLesson(null);
+    }
+  };
+
+  const handleEdit = () => {
+    if (selectedLesson) {
+      setEditingLesson(selectedLesson);
+      setPopoverAnchor(null);
+      setSelectedLesson(null);
+      setEditDialogOpen(true);
     }
   };
 
@@ -330,18 +355,44 @@ export function LessonCalendar() {
                       fontWeight: 700,
                     }}
                   />
+                  {selectedLesson.recurringLessonId && (
+                    <Chip
+                      icon={<RepeatIcon sx={{ fontSize: '12px !important' }} />}
+                      label="Регулярний"
+                      size="small"
+                      sx={{
+                        backgroundColor: alpha('#6366f1', 0.08),
+                        color: '#818cf8',
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        border: 'none',
+                      }}
+                    />
+                  )}
                 </Stack>
               </Box>
-              <IconButton
-                size="small"
-                onClick={handleDelete}
-                sx={{
-                  color: 'rgba(255,255,255,0.3)',
-                  '&:hover': { color: '#f87171', backgroundColor: alpha('#f87171', 0.1) },
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
+              <Stack direction="row" spacing={0.25}>
+                <IconButton
+                  size="small"
+                  onClick={handleEdit}
+                  sx={{
+                    color: 'rgba(255,255,255,0.3)',
+                    '&:hover': { color: '#818cf8', backgroundColor: alpha('#6366f1', 0.1) },
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={handleDelete}
+                  sx={{
+                    color: 'rgba(255,255,255,0.3)',
+                    '&:hover': { color: '#f87171', backgroundColor: alpha('#f87171', 0.1) },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
             </Stack>
 
             <Stack spacing={0.75} sx={{ mt: 1.5 }}>
@@ -372,9 +423,63 @@ export function LessonCalendar() {
                 />
               </>
             )}
+
+            {!isPast && (
+              <Stack spacing={0.75} sx={{ mt: 1.5 }}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="small"
+                  startIcon={<EditIcon sx={{ fontSize: '16px !important' }} />}
+                  onClick={handleEdit}
+                  sx={{
+                    borderColor: alpha('#fff', 0.1),
+                    color: 'rgba(255,255,255,0.6)',
+                    fontSize: '0.8rem',
+                    '&:hover': {
+                      borderColor: alpha('#6366f1', 0.3),
+                      backgroundColor: alpha('#6366f1', 0.06),
+                      color: '#818cf8',
+                    },
+                  }}
+                >
+                  Редагувати
+                </Button>
+                {selectedLesson.recurringLessonId && (
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    size="small"
+                    startIcon={<DeleteSweepIcon sx={{ fontSize: '16px !important' }} />}
+                    onClick={handleDeleteFuture}
+                    sx={{
+                      borderColor: alpha('#f87171', 0.15),
+                      color: 'rgba(255,255,255,0.5)',
+                      fontSize: '0.78rem',
+                      '&:hover': {
+                        borderColor: alpha('#f87171', 0.4),
+                        backgroundColor: alpha('#f87171', 0.06),
+                        color: '#f87171',
+                      },
+                    }}
+                  >
+                    Видалити від цього і далі
+                  </Button>
+                )}
+              </Stack>
+            )}
           </Box>
         )}
       </Popover>
+
+      <EditLessonDialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setEditingLesson(null);
+        }}
+        lesson={editingLesson}
+      />
     </Box>
   );
 }

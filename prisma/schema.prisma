@@ -8,26 +8,29 @@ datasource db {
 }
 
 model Student {
-  id        Int             @id @default(autoincrement())
-  name      String
-  phone     String?
-  email     String?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  lessons   LessonStudent[]
+  id               Int                      @id @default(autoincrement())
+  name             String
+  phone            String?
+  email            String?
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+  lessons          LessonStudent[]
+  recurringLessons RecurringLessonStudent[]
 }
 
 model Lesson {
-  id              Int             @id @default(autoincrement())
-  type            String
-  subject         String
-  startTime       DateTime
-  endTime         DateTime
-  status          String          @default("PLANNED")
-  pricePerStudent Int
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  students        LessonStudent[]
+  id                Int              @id @default(autoincrement())
+  type              String
+  subject           String
+  startTime         DateTime
+  endTime           DateTime
+  status            String           @default("PLANNED")
+  pricePerStudent   Int
+  recurringLessonId Int?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  students          LessonStudent[]
+  recurringLesson   RecurringLesson? @relation(fields: [recurringLessonId], references: [id], onDelete: SetNull)
 }
 
 model LessonStudent {
@@ -39,4 +42,30 @@ model LessonStudent {
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([lessonId, studentId])
+}
+
+model RecurringLesson {
+  id              Int                      @id @default(autoincrement())
+  daysOfWeek      String
+  startTime       String
+  endTime         String
+  type            String
+  subject         String
+  pricePerStudent Int
+  repeatUntil     DateTime?
+  active          Boolean                  @default(true)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  students        RecurringLessonStudent[]
+  lessons         Lesson[]
+}
+
+model RecurringLessonStudent {
+  id                Int             @id @default(autoincrement())
+  recurringLessonId Int
+  studentId         Int
+  recurringLesson   RecurringLesson @relation(fields: [recurringLessonId], references: [id], onDelete: Cascade)
+  student           Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([recurringLessonId, studentId])
 }

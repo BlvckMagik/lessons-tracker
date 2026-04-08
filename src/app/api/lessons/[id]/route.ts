@@ -24,6 +24,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.startTime) data.startTime = new Date(body.startTime);
   if (body.endTime) data.endTime = new Date(body.endTime);
   if (body.pricePerStudent !== undefined) data.pricePerStudent = body.pricePerStudent;
+  if (body.status) data.status = body.status;
 
   if (body.studentIds) {
     await prisma.lessonStudent.deleteMany({ where: { lessonId: numId } });

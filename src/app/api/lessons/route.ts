@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
+import { ensureRecurringLessonsGenerated } from '@/shared/lib/generateLessons';
 
 export async function GET(req: NextRequest) {
+  await ensureRecurringLessonsGenerated();
+
   const { searchParams } = new URL(req.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
