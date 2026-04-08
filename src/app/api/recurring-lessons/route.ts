@@ -42,6 +42,10 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as CreateRecurringBody;
 
+  if (!Array.isArray(body.studentIds) || body.studentIds.length === 0) {
+    return NextResponse.json({ error: 'Оберіть хоча б одного учня' }, { status: 400 });
+  }
+
   const createData = {
     daysOfWeek: body.daysOfWeek,
     startTime: body.startTime,
