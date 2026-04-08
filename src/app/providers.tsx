@@ -6,6 +6,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import 'dayjs/locale/uk';
 import { theme } from './theme';
 import { StoreProvider } from './storeProvider';
+import { DeferredDeleteProvider } from '@/features/deferredDelete';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="uk">
-          {children}
+          <DeferredDeleteProvider>{children}</DeferredDeleteProvider>
         </LocalizationProvider>
       </ThemeProvider>
     </StoreProvider>

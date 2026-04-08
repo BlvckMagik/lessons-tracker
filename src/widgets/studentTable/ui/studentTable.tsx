@@ -44,6 +44,7 @@ import {
   useGetStudentsQuery,
   useDeleteStudentMutation,
 } from '@/entities/student/api/studentApi';
+import { useDeferredDelete } from '@/features/deferredDelete';
 import {
   useGetSettingsQuery,
   useUpdateSettingsMutation,
@@ -117,6 +118,7 @@ export function StudentTable() {
   const { data: students = [], isLoading } = useGetStudentsQuery();
   const { data: settings } = useGetSettingsQuery();
   const [deleteStudent] = useDeleteStudentMutation();
+  const { scheduleDelete } = useDeferredDelete();
   const [updateSettings] = useUpdateSettingsMutation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<Student | null>(null);
@@ -224,9 +226,13 @@ export function StudentTable() {
             <IconButton
               size="small"
               onClick={() => {
-                if (confirm('Видалити учня?')) {
-                  deleteStudent(info.row.original.id);
-                }
+                const id = info.row.original.id;
+                scheduleDelete({
+                  message: 'Учня буде видалено…',
+                  execute: () => {
+                    void deleteStudent(id);
+                  },
+                });
               }}
               sx={{
                 color: 'rgba(255,255,255,0.3)',
@@ -242,7 +248,7 @@ export function StudentTable() {
         ),
       }),
     ],
-    [deleteStudent, defaultIndividual, defaultGroup, setEditStudent]
+    [deleteStudent, scheduleDelete, defaultIndividual, defaultGroup, setEditStudent]
   );
 
   const table = useReactTable({

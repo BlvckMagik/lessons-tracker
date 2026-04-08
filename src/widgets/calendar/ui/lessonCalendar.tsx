@@ -27,6 +27,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PeopleIcon from '@mui/icons-material/People';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import { useGetLessonsQuery, useDeleteLessonMutation, useDeleteFutureLessonsMutation } from '@/entities/lesson/api/lessonApi';
+import { useDeferredDelete } from '@/features/deferredDelete';
 import type { Lesson } from '@/entities/lesson/model/types';
 import { CreateLessonDialog } from '@/features/createLesson/ui/createLessonDialog';
 import { EditLessonDialog } from '@/features/editLesson/ui/editLessonDialog';
@@ -92,6 +93,7 @@ export function LessonCalendar() {
   const { data: lessons = [], isLoading } = useGetLessonsQuery();
   const [deleteLesson] = useDeleteLessonMutation();
   const [deleteFutureLessons] = useDeleteFutureLessonsMutation();
+  const { scheduleDelete } = useDeferredDelete();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<{ start: Date; end: Date } | null>(null);
@@ -138,20 +140,30 @@ export function LessonCalendar() {
     setPopoverAnchor(info.el);
   }, []);
 
-  const handleDelete = async () => {
-    if (selectedLesson) {
-      await deleteLesson(selectedLesson.id);
-      setPopoverAnchor(null);
-      setSelectedLessonId(null);
-    }
+  const handleDelete = () => {
+    if (!selectedLesson) return;
+    const id = selectedLesson.id;
+    setPopoverAnchor(null);
+    setSelectedLessonId(null);
+    scheduleDelete({
+      message: 'Урок буде видалено…',
+      execute: () => {
+        void deleteLesson(id);
+      },
+    });
   };
 
-  const handleDeleteFuture = async () => {
-    if (selectedLesson) {
-      await deleteFutureLessons(selectedLesson.id);
-      setPopoverAnchor(null);
-      setSelectedLessonId(null);
-    }
+  const handleDeleteFuture = () => {
+    if (!selectedLesson) return;
+    const id = selectedLesson.id;
+    setPopoverAnchor(null);
+    setSelectedLessonId(null);
+    scheduleDelete({
+      message: 'Уроки серії від цього моменту буде видалено…',
+      execute: () => {
+        void deleteFutureLessons(id);
+      },
+    });
   };
 
   const handleEdit = () => {
