@@ -10,6 +10,7 @@ export interface LessonStudent {
   studentId: number;
   paid: boolean;
   status: LessonStatus | null;
+  price: number;
   student: Student;
 }
 
@@ -33,7 +34,6 @@ export interface CreateLessonDto {
   startTime: string;
   endTime: string;
   studentIds: number[];
-  pricePerStudent: number;
 }
 
 export interface UpdateLessonDto {
@@ -42,7 +42,6 @@ export interface UpdateLessonDto {
   startTime?: string;
   endTime?: string;
   studentIds?: number[];
-  pricePerStudent?: number;
   status?: LessonStatus;
 }
 

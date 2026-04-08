@@ -360,7 +360,7 @@ export function LessonCalendar() {
                     sx={{ borderColor: alpha('#fff', 0.1), fontSize: '0.7rem' }}
                   />
                   <Chip
-                    label={`${selectedLesson.pricePerStudent} грн`}
+                    label={`${selectedLesson.students.reduce((sum, s) => sum + (s.price || selectedLesson.pricePerStudent), 0)} грн`}
                     size="small"
                     sx={{
                       background: alpha('#6366f1', 0.15),

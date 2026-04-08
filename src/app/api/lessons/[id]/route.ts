@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
+import { resolveStudentPrices } from '@/shared/lib/priceHelper';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,15 +24,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.subject) data.subject = body.subject;
   if (body.startTime) data.startTime = new Date(body.startTime);
   if (body.endTime) data.endTime = new Date(body.endTime);
-  if (body.pricePerStudent !== undefined) data.pricePerStudent = body.pricePerStudent;
   if (body.status) data.status = body.status;
 
   if (body.studentIds) {
+    const lessonType = body.type || (await prisma.lesson.findUnique({ where: { id: numId }, select: { type: true } }))?.type || 'INDIVIDUAL';
+    const studentIds = body.studentIds as number[];
+    const priceMap = await resolveStudentPrices(studentIds, lessonType);
+
     await prisma.lessonStudent.deleteMany({ where: { lessonId: numId } });
     await prisma.lessonStudent.createMany({
-      data: (body.studentIds as number[]).map((studentId) => ({
+      data: studentIds.map((studentId) => ({
         lessonId: numId,
         studentId,
+        price: priceMap.get(studentId) ?? 0,
       })),
     });
   }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { ensureRecurringLessonsGenerated } from '@/shared/lib/generateLessons';
+import { resolveStudentPrices } from '@/shared/lib/priceHelper';
 
 export async function GET(req: NextRequest) {
   await ensureRecurringLessonsGenerated();
@@ -31,6 +32,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
+  const studentIds = body.studentIds as number[];
+  const priceMap = await resolveStudentPrices(studentIds, body.type);
 
   const lesson = await prisma.lesson.create({
     data: {
@@ -38,10 +41,11 @@ export async function POST(req: NextRequest) {
       subject: body.subject,
       startTime: new Date(body.startTime),
       endTime: new Date(body.endTime),
-      pricePerStudent: body.pricePerStudent,
+      pricePerStudent: 0,
       students: {
-        create: (body.studentIds as number[]).map((studentId) => ({
+        create: studentIds.map((studentId) => ({
           studentId,
+          price: priceMap.get(studentId) ?? 0,
         })),
       },
     },

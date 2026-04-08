@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, forwardRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,9 +17,9 @@ import {
   Divider,
 } from '@mui/material';
 import type { TransitionProps } from '@mui/material/transitions';
-import { forwardRef } from 'react';
-import { useCreateStudentMutation } from '@/entities/student/api/studentApi';
+import { useUpdateStudentMutation } from '@/entities/student/api/studentApi';
 import { useGetSettingsQuery } from '@/entities/settings/api/settingsApi';
+import type { Student } from '@/entities/student/model/types';
 
 const SlideTransition = forwardRef(function SlideTransition(
   props: TransitionProps & { children: React.ReactElement },
@@ -31,52 +31,59 @@ const SlideTransition = forwardRef(function SlideTransition(
 interface Props {
   open: boolean;
   onClose: () => void;
+  student: Student | null;
 }
 
-export function CreateStudentDialog({ open, onClose }: Props) {
+export function EditStudentDialog({ open, onClose, student }: Props) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [individualPrice, setIndividualPrice] = useState('');
   const [groupPrice, setGroupPrice] = useState('');
-  const [createStudent, { isLoading }] = useCreateStudentMutation();
+  const [updateStudent, { isLoading }] = useUpdateStudentMutation();
   const { data: settings } = useGetSettingsQuery();
 
-  const handleSubmit = async () => {
-    if (!name.trim()) return;
-    await createStudent({
-      name: name.trim(),
-      phone: phone.trim() || undefined,
-      email: email.trim() || undefined,
-      individualPrice: individualPrice ? Number(individualPrice) : null,
-      groupPrice: groupPrice ? Number(groupPrice) : null,
-    });
-    handleClose();
-  };
+  useEffect(() => {
+    if (open && student) {
+      setName(student.name);
+      setPhone(student.phone ?? '');
+      setEmail(student.email ?? '');
+      setIndividualPrice(student.individualPrice !== null ? String(student.individualPrice) : '');
+      setGroupPrice(student.groupPrice !== null ? String(student.groupPrice) : '');
+    }
+  }, [open, student]);
 
-  const handleClose = () => {
-    setName('');
-    setPhone('');
-    setEmail('');
-    setIndividualPrice('');
-    setGroupPrice('');
+  const handleSubmit = async () => {
+    if (!student || !name.trim()) return;
+    await updateStudent({
+      id: student.id,
+      data: {
+        name: name.trim(),
+        phone: phone.trim() || undefined,
+        email: email.trim() || undefined,
+        individualPrice: individualPrice ? Number(individualPrice) : null,
+        groupPrice: groupPrice ? Number(groupPrice) : null,
+      },
+    });
     onClose();
   };
+
+  if (!student) return null;
 
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       maxWidth="sm"
       fullWidth
       TransitionComponent={SlideTransition}
     >
       <DialogTitle sx={{ pb: 0.5 }}>
         <Typography variant="h6" fontSize="1.1rem" fontWeight={700}>
-          Новий учень
+          Редагувати учня
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.35)', mt: 0.25 }}>
-          Додайте інформацію про учня
+          Змініть інформацію про учня
         </Typography>
       </DialogTitle>
       <DialogContent>
@@ -143,13 +150,13 @@ export function CreateStudentDialog({ open, onClose }: Props) {
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
         <Button
-          onClick={handleClose}
+          onClick={onClose}
           sx={{ color: 'rgba(255,255,255,0.5)' }}
         >
           Скасувати
         </Button>
         <Button onClick={handleSubmit} variant="contained" disabled={!name.trim() || isLoading}>
-          Створити
+          Зберегти
         </Button>
       </DialogActions>
     </Dialog>

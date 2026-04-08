@@ -7,11 +7,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Settings {
+  id                     Int @id @default(1)
+  defaultIndividualPrice Int @default(200)
+  defaultGroupPrice      Int @default(50)
+}
+
 model Student {
   id               Int                      @id @default(autoincrement())
   name             String
   phone            String?
   email            String?
+  individualPrice  Int?
+  groupPrice       Int?
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
   lessons          LessonStudent[]
@@ -25,7 +33,7 @@ model Lesson {
   startTime         DateTime
   endTime           DateTime
   status            String           @default("PLANNED")
-  pricePerStudent   Int
+  pricePerStudent   Int              @default(0)
   recurringLessonId Int?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -39,6 +47,7 @@ model LessonStudent {
   studentId Int
   paid      Boolean @default(false)
   status    String?
+  price     Int     @default(0)
   lesson    Lesson  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
@@ -52,7 +61,7 @@ model RecurringLesson {
   endTime         String
   type            String
   subject         String
-  pricePerStudent Int
+  pricePerStudent Int                      @default(0)
   repeatUntil     DateTime?
   active          Boolean                  @default(true)
   createdAt       DateTime                 @default(now())

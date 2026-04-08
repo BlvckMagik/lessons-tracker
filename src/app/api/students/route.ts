@@ -15,6 +15,8 @@ export async function POST(req: NextRequest) {
       name: body.name,
       phone: body.phone || null,
       email: body.email || null,
+      individualPrice: body.individualPrice ?? null,
+      groupPrice: body.groupPrice ?? null,
     },
   });
   return NextResponse.json(student, { status: 201 });

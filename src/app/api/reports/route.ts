@@ -18,6 +18,7 @@ export async function GET() {
     const lessons = student.lessons.map((ls) => {
       const effectiveStatus = ls.status ?? ls.lesson.status;
       const charged = (CHARGEABLE_STATUSES as readonly string[]).includes(effectiveStatus);
+      const price = ls.price || ls.lesson.pricePerStudent;
       return {
         lessonId: ls.lessonId,
         lessonStudentId: ls.id,
@@ -26,7 +27,7 @@ export async function GET() {
         startTime: ls.lesson.startTime.toISOString(),
         status: effectiveStatus,
         studentStatus: ls.status,
-        pricePerStudent: ls.lesson.pricePerStudent,
+        pricePerStudent: price,
         paid: ls.paid,
         charged,
       };

@@ -30,7 +30,6 @@ export interface CreateRecurringLessonDto {
   endTime: string;
   type: LessonType;
   subject: LessonSubject;
-  pricePerStudent: number;
   studentIds: number[];
   repeatUntil?: string;
 }

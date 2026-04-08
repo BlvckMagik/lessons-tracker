@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { resolveStudentPrices } from './priceHelper';
 
 const DEFAULT_WEEKS_AHEAD = 12;
 const MIN_FUTURE_WEEKS = 4;
@@ -56,6 +57,9 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
     cursor.setDate(cursor.getDate() + 1);
   }
 
+  const studentIds = recurring.students.map((s) => s.studentId);
+  const priceMap = await resolveStudentPrices(studentIds, recurring.type);
+
   for (const lessonData of lessonsToCreate) {
     await prisma.lesson.create({
       data: {
@@ -63,10 +67,13 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
         subject: recurring.subject,
         startTime: lessonData.startTime,
         endTime: lessonData.endTime,
-        pricePerStudent: recurring.pricePerStudent,
+        pricePerStudent: 0,
         recurringLessonId: recurring.id,
         students: {
-          create: recurring.students.map((s) => ({ studentId: s.studentId })),
+          create: recurring.students.map((s) => ({
+            studentId: s.studentId,
+            price: priceMap.get(s.studentId) ?? 0,
+          })),
         },
       },
     });

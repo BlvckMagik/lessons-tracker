@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
       endTime: body.endTime,
       type: body.type,
       subject: body.subject,
-      pricePerStudent: body.pricePerStudent,
+      pricePerStudent: 0,
       repeatUntil: body.repeatUntil ? new Date(body.repeatUntil) : null,
       students: {
         create: (body.studentIds as number[]).map((studentId) => ({ studentId })),

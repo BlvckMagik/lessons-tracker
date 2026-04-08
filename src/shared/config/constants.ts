@@ -1,6 +1,3 @@
-export const PRICE_INDIVIDUAL = 200;
-export const PRICE_GROUP = 50;
-
 export const LESSON_TYPES = {
   INDIVIDUAL: 'INDIVIDUAL',
   GROUP: 'GROUP',

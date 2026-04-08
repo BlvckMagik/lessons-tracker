@@ -32,6 +32,7 @@ import {
   useUpdateLessonMutation,
   useUpdateLessonStatusMutation,
 } from '@/entities/lesson/api/lessonApi';
+import { useGetSettingsQuery } from '@/entities/settings/api/settingsApi';
 import type { Lesson, LessonType, LessonSubject, LessonStatus } from '@/entities/lesson/model/types';
 import type { Student } from '@/entities/student/model/types';
 import {
@@ -40,8 +41,6 @@ import {
   LESSON_TYPE_LABELS,
   LESSON_SUBJECT_LABELS,
   LESSON_STATUS_LABELS,
-  PRICE_INDIVIDUAL,
-  PRICE_GROUP,
 } from '@/shared/config/constants';
 
 const SlideTransition = forwardRef(function SlideTransition(
@@ -73,9 +72,13 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
   const [status, setStatus] = useState<LessonStatus>('PLANNED');
 
   const { data: allStudents = [] } = useGetStudentsQuery();
+  const { data: settings } = useGetSettingsQuery();
   const [updateLesson, { isLoading: isUpdating }] = useUpdateLessonMutation();
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateLessonStatusMutation();
   const isLoading = isUpdating || isUpdatingStatus;
+
+  const defaultIndividual = settings?.defaultIndividualPrice ?? 200;
+  const defaultGroup = settings?.defaultGroupPrice ?? 50;
 
   useEffect(() => {
     if (open && lesson) {
@@ -91,7 +94,14 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
     }
   }, [open, lesson, allStudents]);
 
-  const price = type === LESSON_TYPES.INDIVIDUAL ? PRICE_INDIVIDUAL : PRICE_GROUP;
+  const getStudentPrice = (student: Student) => {
+    if (type === LESSON_TYPES.INDIVIDUAL) {
+      return student.individualPrice ?? defaultIndividual;
+    }
+    return student.groupPrice ?? defaultGroup;
+  };
+
+  const totalPrice = selectedStudents.reduce((sum, s) => sum + getStudentPrice(s), 0);
 
   const handleSubmit = async () => {
     if (!lesson || !startTime || !endTime || selectedStudents.length === 0) return;
@@ -108,7 +118,6 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         studentIds: selectedStudents.map((s) => s.id),
-        pricePerStudent: price,
       },
     });
 
@@ -279,23 +288,25 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
             />
           )}
 
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: 2,
-              backgroundColor: alpha('#6366f1', 0.06),
-              border: `1px solid ${alpha('#6366f1', 0.12)}`,
-            }}
-          >
-            <Typography variant="body2" fontWeight={600} sx={{ color: '#818cf8' }}>
-              Вартість: {price} грн {type === LESSON_TYPES.GROUP ? 'з кожного' : ''}
-              {type === LESSON_TYPES.GROUP && selectedStudents.length > 0 && (
-                <Box component="span" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                  {' '}(разом: {price * selectedStudents.length} грн)
-                </Box>
-              )}
-            </Typography>
-          </Box>
+          {selectedStudents.length > 0 && (
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                backgroundColor: alpha('#6366f1', 0.06),
+                border: `1px solid ${alpha('#6366f1', 0.12)}`,
+              }}
+            >
+              {selectedStudents.map((s) => (
+                <Typography key={s.id} variant="body2" fontSize="0.8rem" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                  {s.name}: {getStudentPrice(s)} грн
+                </Typography>
+              ))}
+              <Typography variant="body2" fontWeight={600} sx={{ color: '#818cf8', mt: 0.5 }}>
+                Разом: {totalPrice} грн
+              </Typography>
+            </Box>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
