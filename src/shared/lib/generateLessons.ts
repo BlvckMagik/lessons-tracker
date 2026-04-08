@@ -60,8 +60,9 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
     recurring.lessons.map((l) => dayjs.utc(l.startTime).tz(tz).format('YYYY-MM-DD')),
   );
 
-  let cursor = dayjs.tz(nowUtc.valueOf(), tz).startOf('day');
-  const weeksEnd = dayjs.tz(nowUtc.valueOf(), tz).add(weeksAhead, 'week').endOf('day');
+  const nowInTz = dayjs.tz(nowUtc.valueOf(), tz);
+  let cursor = nowInTz.subtract(nowInTz.day(), 'day').startOf('day');
+  const weeksEnd = nowInTz.add(weeksAhead, 'week').endOf('day');
   let rangeEnd = weeksEnd;
   if (recurring.repeatUntil) {
     const until = dayjs.utc(recurring.repeatUntil).tz(tz).endOf('day');
