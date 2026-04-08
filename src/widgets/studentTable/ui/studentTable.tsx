@@ -28,6 +28,7 @@ import {
   InputAdornment,
   alpha,
   Fade,
+  Skeleton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -43,8 +44,67 @@ import { CreateStudentDialog } from '@/features/createStudent/ui/createStudentDi
 
 const columnHelper = createColumnHelper<Student>();
 
+const SKELETON_ROWS = 5;
+const TABLE_HEADERS = ["Ім'я", 'Телефон', 'Email', 'Створено', ''];
+
+function StudentTableSkeleton() {
+  return (
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Box>
+          <Skeleton variant="rounded" width={80} height={32} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="text" width={60} sx={{ mt: 0.5 }} />
+        </Box>
+        <Skeleton variant="rounded" width={150} height={40} sx={{ borderRadius: 2.5 }} />
+      </Stack>
+
+      <Skeleton variant="rounded" width={320} height={40} sx={{ mb: 2.5, borderRadius: 2.5 }} />
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {TABLE_HEADERS.map((h, i) => (
+                <TableCell key={i}>
+                  {h && (
+                    <Skeleton variant="text" width={h.length * 10} sx={{ fontSize: '0.75rem' }} />
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton variant="text" width={100 + Math.random() * 60} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={110} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={140} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={80} />
+                </TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                    <Skeleton variant="circular" width={28} height={28} />
+                    <Skeleton variant="circular" width={28} height={28} />
+                  </Stack>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
 export function StudentTable() {
-  const { data: students = [] } = useGetStudentsQuery();
+  const { data: students = [], isLoading } = useGetStudentsQuery();
   const [deleteStudent] = useDeleteStudentMutation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -130,6 +190,10 @@ export function StudentTable() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
+
+  if (isLoading) {
+    return <StudentTableSkeleton />;
+  }
 
   return (
     <Box>

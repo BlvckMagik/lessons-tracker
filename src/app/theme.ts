@@ -267,5 +267,18 @@ export const theme = createTheme({
         },
       },
     },
+    MuiSkeleton: {
+      defaultProps: {
+        animation: 'wave',
+      },
+      styleOverrides: {
+        root: {
+          backgroundColor: alpha('#fff', 0.04),
+          '&::after': {
+            background: `linear-gradient(90deg, transparent, ${alpha('#fff', 0.04)}, transparent)`,
+          },
+        },
+      },
+    },
   },
 });

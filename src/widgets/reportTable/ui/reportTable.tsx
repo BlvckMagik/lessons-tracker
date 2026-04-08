@@ -31,6 +31,7 @@ import {
   InputAdornment,
   alpha,
   Fade,
+  Skeleton,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
@@ -159,8 +160,75 @@ function LessonDetailsTable({
   );
 }
 
+const REPORT_SKELETON_ROWS = 4;
+const REPORT_HEADERS = ['', 'Учень', 'Уроків', 'Проведено', 'Пропущено', 'Скасовано', 'Нараховано', 'Оплачено', 'Борг'];
+
+function ReportTableSkeleton() {
+  return (
+    <Box>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Box>
+          <Skeleton variant="rounded" width={80} height={32} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="text" width={180} sx={{ mt: 0.5 }} />
+        </Box>
+      </Stack>
+
+      <Skeleton variant="rounded" width={320} height={40} sx={{ mb: 2.5, borderRadius: 2.5 }} />
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {REPORT_HEADERS.map((h, i) => (
+                <TableCell key={i}>
+                  {h && (
+                    <Skeleton variant="text" width={h.length * 9} sx={{ fontSize: '0.75rem' }} />
+                  )}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {Array.from({ length: REPORT_SKELETON_ROWS }).map((_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton variant="circular" width={28} height={28} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={90 + Math.random() * 50} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={24} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="rounded" width={36} height={24} sx={{ borderRadius: 2 }} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="rounded" width={36} height={24} sx={{ borderRadius: 2 }} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="rounded" width={36} height={24} sx={{ borderRadius: 2 }} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={70} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="text" width={70} />
+                </TableCell>
+                <TableCell>
+                  <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: 2 }} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+}
+
 export function ReportTable() {
-  const { data: reports = [] } = useGetReportsQuery();
+  const { data: reports = [], isLoading } = useGetReportsQuery();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -312,6 +380,10 @@ export function ReportTable() {
     getFilteredRowModel: getFilteredRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
   });
+
+  if (isLoading) {
+    return <ReportTableSkeleton />;
+  }
 
   return (
     <Box>

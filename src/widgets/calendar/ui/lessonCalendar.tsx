@@ -17,6 +17,7 @@ import {
   Divider,
   alpha,
   Fade,
+  Skeleton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -38,8 +39,52 @@ const statusColorMap: Record<string, string> = {
   CANCELLED: '#f87171',
 };
 
+function CalendarSkeleton() {
+  return (
+    <Paper sx={{ p: 2.5, border: `1px solid ${alpha('#fff', 0.06)}` }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+        <Stack direction="row" spacing={1}>
+          <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rounded" width={36} height={36} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rounded" width={80} height={36} sx={{ borderRadius: 2 }} />
+        </Stack>
+        <Skeleton variant="rounded" width={180} height={28} sx={{ borderRadius: 1 }} />
+        <Stack direction="row" spacing={1}>
+          <Skeleton variant="rounded" width={72} height={36} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rounded" width={72} height={36} sx={{ borderRadius: 2 }} />
+          <Skeleton variant="rounded" width={56} height={36} sx={{ borderRadius: 2 }} />
+        </Stack>
+      </Stack>
+
+      <Stack direction="row" spacing={0}>
+        {Array.from({ length: 7 }).map((_, dayIdx) => (
+          <Box key={dayIdx} sx={{ flex: 1, px: 0.5 }}>
+            <Skeleton
+              variant="rounded"
+              height={28}
+              sx={{ mb: 1.5, borderRadius: 1 }}
+            />
+            {Array.from({ length: 6 }).map((_, slotIdx) => (
+              <Skeleton
+                key={slotIdx}
+                variant="rectangular"
+                height={48}
+                sx={{
+                  mb: 0.25,
+                  borderRadius: 0,
+                  opacity: 0.3 + (slotIdx % 2) * 0.15,
+                }}
+              />
+            ))}
+          </Box>
+        ))}
+      </Stack>
+    </Paper>
+  );
+}
+
 export function LessonCalendar() {
-  const { data: lessons = [] } = useGetLessonsQuery();
+  const { data: lessons = [], isLoading } = useGetLessonsQuery();
   const [deleteLesson] = useDeleteLessonMutation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -88,6 +133,10 @@ export function LessonCalendar() {
   };
 
   const isPast = selectedLesson ? new Date(selectedLesson.endTime) < new Date() : false;
+
+  if (isLoading) {
+    return <CalendarSkeleton />;
+  }
 
   return (
     <Box sx={{ height: '100%' }}>
