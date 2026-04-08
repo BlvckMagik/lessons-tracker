@@ -1,11 +1,34 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { CHARGEABLE_STATUSES } from '@/shared/config/constants';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const fromStr = searchParams.get('from');
+  const toStr = searchParams.get('to');
+
+  let lessonTimeFilter: { gte: Date; lte: Date } | undefined;
+  if (fromStr && toStr) {
+    const fromDate = new Date(fromStr);
+    const toDate = new Date(toStr);
+    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
+    }
+    lessonTimeFilter = { gte: fromDate, lte: toDate };
+  }
+
   const students = await prisma.student.findMany({
     include: {
       lessons: {
+        ...(lessonTimeFilter
+          ? {
+              where: {
+                lesson: {
+                  startTime: lessonTimeFilter,
+                },
+              },
+            }
+          : {}),
         include: {
           lesson: true,
         },

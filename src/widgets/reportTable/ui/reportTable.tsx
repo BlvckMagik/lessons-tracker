@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useMemo, Fragment } from "react";
+import { useState, useMemo, Fragment, useCallback } from "react";
+import dayjs, { type Dayjs } from "dayjs";
+import { DateRangePicker } from "@mui/x-date-pickers-pro/DateRangePicker";
+import { SingleInputDateRangeField } from "@mui/x-date-pickers-pro/SingleInputDateRangeField";
+import type { DateRange } from "@mui/x-date-pickers-pro/models";
 import {
   useReactTable,
   getCoreRowModel,
@@ -36,6 +40,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
@@ -235,12 +240,33 @@ function ReportTableSkeleton() {
           sx={{ borderRadius: 2 }}
         />
       </Stack>
-      <Skeleton
-        variant="rounded"
-        width={320}
-        height={40}
-        sx={{ mb: 2.5, borderRadius: 2.5 }}
-      />
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2.5, flexWrap: "wrap", gap: 2 }}
+      >
+        <Skeleton
+          variant="rounded"
+          width={320}
+          height={40}
+          sx={{ borderRadius: 2.5 }}
+        />
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Skeleton
+            variant="rounded"
+            width={280}
+            height={40}
+            sx={{ borderRadius: 2.5 }}
+          />
+          <Skeleton
+            variant="rounded"
+            width={180}
+            height={40}
+            sx={{ borderRadius: 2.5 }}
+          />
+        </Stack>
+      </Stack>
 
       <TableContainer component={Paper}>
         <Table>
@@ -320,8 +346,39 @@ function ReportTableSkeleton() {
 
 type TypeFilter = "ALL" | "INDIVIDUAL" | "GROUP";
 
+type NonNullDateRange = [Dayjs, Dayjs];
+
 export function ReportTable() {
-  const { data: reports = [], isLoading } = useGetReportsQuery();
+  const [dateRange, setDateRange] = useState<NonNullDateRange>(() => [
+    dayjs().startOf("month"),
+    dayjs().endOf("day"),
+  ]);
+
+  const reportQueryArgs = useMemo(
+    () => ({
+      from: dateRange[0].startOf("day").toISOString(),
+      to: dateRange[1].endOf("day").toISOString(),
+    }),
+    [dateRange],
+  );
+
+  const {
+    data: reports = [],
+    isLoading,
+    isFetching,
+  } = useGetReportsQuery(reportQueryArgs);
+
+  const handleDateRangeChange = useCallback((v: DateRange<Dayjs>) => {
+    setDateRange((prev) => {
+      const start = v[0] ?? prev[0];
+      const end = v[1] ?? prev[1];
+      if (start.isAfter(end, "day")) {
+        return [start, start.endOf("day")] as NonNullDateRange;
+      }
+      return [start, end] as NonNullDateRange;
+    });
+  }, []);
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
@@ -601,13 +658,18 @@ export function ReportTable() {
         />
       </Stack>
 
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2.5 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2.5, flexWrap: "wrap", gap: 2 }}
+      >
         <TextField
           placeholder="Пошук учня..."
           size="small"
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          sx={{ width: 320 }}
+          sx={{ width: 320, flexShrink: 0 }}
           slotProps={{
             input: {
               startAdornment: (
@@ -620,18 +682,39 @@ export function ReportTable() {
             },
           }}
         />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Тип занять</InputLabel>
-          <Select
-            value={typeFilter}
-            label="Тип занять"
-            onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-          >
-            <MenuItem value="ALL">Усі заняття</MenuItem>
-            <MenuItem value="INDIVIDUAL">Індивідуальні</MenuItem>
-            <MenuItem value="GROUP">Групові</MenuItem>
-          </Select>
-        </FormControl>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          {isFetching && (
+            <CircularProgress
+              size={18}
+              sx={{ color: "rgba(255,255,255,0.35)" }}
+            />
+          )}
+          <DateRangePicker
+            value={dateRange}
+            onChange={handleDateRangeChange}
+            slots={{ field: SingleInputDateRangeField }}
+            localeText={{ start: "Від", end: "До" }}
+            slotProps={{
+              textField: {
+                size: "small",
+                label: "Період",
+                sx: { minWidth: 280 },
+              },
+            }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Тип занять</InputLabel>
+            <Select
+              value={typeFilter}
+              label="Тип занять"
+              onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
+            >
+              <MenuItem value="ALL">Усі заняття</MenuItem>
+              <MenuItem value="INDIVIDUAL">Індивідуальні</MenuItem>
+              <MenuItem value="GROUP">Групові</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
       </Stack>
 
       <TableContainer component={Paper}>

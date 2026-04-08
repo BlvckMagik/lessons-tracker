@@ -101,6 +101,9 @@ export const theme = createTheme({
             boxShadow: `0 0 12px 4px rgba(129, 140, 248, 0.25)`,
           },
         },
+        '.MuiPopper-root div[style*="100000"]': {
+          display: 'none !important',
+        },
       },
     },
     MuiPaper: {

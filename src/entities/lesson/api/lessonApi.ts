@@ -148,8 +148,11 @@ export const lessonApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: 'Report' }],
     }),
 
-    getReports: build.query<StudentReport[], void>({
-      query: () => 'reports',
+    getReports: build.query<StudentReport[], { from: string; to: string }>({
+      query: ({ from, to }) => {
+        const sp = new URLSearchParams({ from, to });
+        return `reports?${sp.toString()}`;
+      },
       providesTags: [{ type: 'Report' }],
     }),
   }),
