@@ -16,8 +16,7 @@ model Settings {
 model Student {
   id               Int                      @id @default(autoincrement())
   name             String
-  phone            String?
-  email            String?
+  telegram         String?
   individualPrice  Int?
   groupPrice       Int?
   createdAt        DateTime                 @default(now())

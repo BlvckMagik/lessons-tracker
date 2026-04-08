@@ -38,6 +38,8 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import SearchIcon from '@mui/icons-material/Search';
 import PeopleIcon from '@mui/icons-material/People';
 import SettingsIcon from '@mui/icons-material/Settings';
+import TelegramIcon from '@mui/icons-material/Telegram';
+import Link from '@mui/material/Link';
 import {
   useGetStudentsQuery,
   useDeleteStudentMutation,
@@ -53,7 +55,7 @@ import { EditStudentDialog } from '@/features/editStudent/ui/editStudentDialog';
 const columnHelper = createColumnHelper<Student>();
 
 const SKELETON_ROWS = 5;
-const TABLE_HEADERS = ["Ім'я", 'Телефон', 'Індивід.', 'Група', ''];
+const TABLE_HEADERS = ["Ім'я", 'Telegram', 'Індивід.', 'Група', ''];
 
 function StudentTableSkeleton() {
   return (
@@ -152,13 +154,32 @@ export function StudentTable() {
           </Typography>
         ),
       }),
-      columnHelper.accessor('phone', {
-        header: 'Телефон',
-        cell: (info) => (
-          <Typography fontSize="0.875rem" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-            {info.getValue() || '—'}
-          </Typography>
-        ),
+      columnHelper.accessor('telegram', {
+        header: 'Telegram',
+        cell: (info) => {
+          const val = info.getValue();
+          if (!val) return <Typography fontSize="0.875rem" sx={{ color: 'rgba(255,255,255,0.25)' }}>—</Typography>;
+          const username = val.replace(/^@/, '');
+          return (
+            <Link
+              href={`https://t.me/${username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="hover"
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.5,
+                fontSize: '0.875rem',
+                color: '#29b6f6',
+                fontWeight: 500,
+              }}
+            >
+              <TelegramIcon sx={{ fontSize: 16 }} />
+              @{username}
+            </Link>
+          );
+        },
       }),
       columnHelper.accessor('individualPrice', {
         header: 'Індивід.',

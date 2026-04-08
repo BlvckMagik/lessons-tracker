@@ -1,8 +1,7 @@
 export interface Student {
   id: number;
   name: string;
-  phone: string | null;
-  email: string | null;
+  telegram: string | null;
   individualPrice: number | null;
   groupPrice: number | null;
   createdAt: string;
@@ -11,16 +10,14 @@ export interface Student {
 
 export interface CreateStudentDto {
   name: string;
-  phone?: string;
-  email?: string;
+  telegram?: string;
   individualPrice?: number | null;
   groupPrice?: number | null;
 }
 
 export interface UpdateStudentDto {
   name?: string;
-  phone?: string;
-  email?: string;
+  telegram?: string;
   individualPrice?: number | null;
   groupPrice?: number | null;
 }

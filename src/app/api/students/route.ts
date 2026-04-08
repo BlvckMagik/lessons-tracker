@@ -13,8 +13,7 @@ export async function POST(req: NextRequest) {
   const student = await prisma.student.create({
     data: {
       name: body.name,
-      phone: body.phone || null,
-      email: body.email || null,
+      telegram: body.telegram || null,
       individualPrice: body.individualPrice ?? null,
       groupPrice: body.groupPrice ?? null,
     },

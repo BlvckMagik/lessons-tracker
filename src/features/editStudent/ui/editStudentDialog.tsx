@@ -36,8 +36,7 @@ interface Props {
 
 export function EditStudentDialog({ open, onClose, student }: Props) {
   const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [telegram, setTelegram] = useState('');
   const [individualPrice, setIndividualPrice] = useState('');
   const [groupPrice, setGroupPrice] = useState('');
   const [updateStudent, { isLoading }] = useUpdateStudentMutation();
@@ -46,8 +45,7 @@ export function EditStudentDialog({ open, onClose, student }: Props) {
   useEffect(() => {
     if (open && student) {
       setName(student.name);
-      setPhone(student.phone ?? '');
-      setEmail(student.email ?? '');
+      setTelegram(student.telegram ?? '');
       setIndividualPrice(student.individualPrice !== null ? String(student.individualPrice) : '');
       setGroupPrice(student.groupPrice !== null ? String(student.groupPrice) : '');
     }
@@ -59,8 +57,7 @@ export function EditStudentDialog({ open, onClose, student }: Props) {
       id: student.id,
       data: {
         name: name.trim(),
-        phone: phone.trim() || undefined,
-        email: email.trim() || undefined,
+        telegram: telegram.trim() || undefined,
         individualPrice: individualPrice ? Number(individualPrice) : null,
         groupPrice: groupPrice ? Number(groupPrice) : null,
       },
@@ -97,16 +94,10 @@ export function EditStudentDialog({ open, onClose, student }: Props) {
             fullWidth
           />
           <TextField
-            label="Телефон"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
+            label="Telegram"
+            value={telegram}
+            onChange={(e) => setTelegram(e.target.value)}
+            placeholder="@username"
             fullWidth
           />
 
