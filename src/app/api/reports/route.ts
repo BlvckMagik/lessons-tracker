@@ -17,7 +17,7 @@ export async function GET() {
   const reports = students.map((student) => {
     const lessons = student.lessons.map((ls) => {
       const effectiveStatus = ls.status ?? ls.lesson.status;
-      const charged = CHARGEABLE_STATUSES.includes(effectiveStatus);
+      const charged = (CHARGEABLE_STATUSES as readonly string[]).includes(effectiveStatus);
       return {
         lessonId: ls.lessonId,
         lessonStudentId: ls.id,
