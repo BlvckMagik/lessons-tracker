@@ -33,3 +33,7 @@ export const LESSON_STATUS_LABELS: Record<string, string> = {
 };
 
 export const CHARGEABLE_STATUSES = [LESSON_STATUSES.COMPLETED, LESSON_STATUSES.MISSED];
+
+export const SIDEBAR_COOKIE = 'sidebar-collapsed';
+export const DRAWER_WIDTH = 260;
+export const DRAWER_WIDTH_COLLAPSED = 72;

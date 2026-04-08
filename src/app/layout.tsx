@@ -1,14 +1,19 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import { Box } from '@mui/material';
 import { Providers } from './providers';
-import { Sidebar, DRAWER_WIDTH } from '@/widgets/sidebar/ui/sidebar';
+import { Sidebar } from '@/widgets/sidebar/ui/sidebar';
+import { SIDEBAR_COOKIE } from '@/shared/config/constants';
 
 export const metadata: Metadata = {
   title: 'Lesson Tracker',
   description: 'Трекінг уроків, учнів та оплат',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const sidebarCollapsed = cookieStore.get(SIDEBAR_COOKIE)?.value === 'true';
+
   return (
     <html lang="uk">
       <head>
@@ -22,12 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{ margin: 0 }}>
         <Providers>
           <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-            <Sidebar />
+            <Sidebar defaultCollapsed={sidebarCollapsed} />
             <Box
               component="main"
               sx={{
                 flexGrow: 1,
-                width: `calc(100% - ${DRAWER_WIDTH}px)`,
+                minWidth: 0,
                 p: { xs: 2, md: 4 },
                 pt: { xs: 3, md: 4 },
                 backgroundColor: '#09090b',
