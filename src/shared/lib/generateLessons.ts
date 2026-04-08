@@ -50,7 +50,16 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
   if (!recurring || !recurring.active) return 0;
 
   const tz = resolveLessonTimeZone(recurring.timeZone);
-  const days = recurring.daysOfWeek.split(',').map(Number);
+  const days = Array.from(
+    new Set(
+      recurring.daysOfWeek
+        .split(',')
+        .map((p) => Number(p.trim()))
+        .filter((n) => n >= 0 && n <= 6),
+    ),
+  );
+  if (days.length === 0) return 0;
+
   const [startH, startM] = recurring.startTime.split(':').map(Number);
   const [endH, endM] = recurring.endTime.split(':').map(Number);
 
@@ -61,7 +70,9 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
   );
 
   const nowInTz = dayjs.tz(nowUtc.valueOf(), tz);
-  let cursor = nowInTz.subtract(nowInTz.day(), 'day').startOf('day');
+  const dow = nowInTz.day();
+  const offsetFromMonday = dow === 0 ? 6 : dow - 1;
+  let cursor = nowInTz.subtract(offsetFromMonday, 'day').startOf('day');
   const weeksEnd = nowInTz.add(weeksAhead, 'week').endOf('day');
   let rangeEnd = weeksEnd;
   if (recurring.repeatUntil) {

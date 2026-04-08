@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
 import { generateLessonInstances } from '@/shared/lib/generateLessons';
+import { parseRepeatUntilInput } from '@/shared/lib/repeatUntilParse';
 
 const DEFAULT_TIMEZONE = 'Europe/Kyiv';
 
@@ -46,15 +47,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Оберіть хоча б одного учня' }, { status: 400 });
   }
 
+  const tz = parseTimeZone(body);
   const createData = {
     daysOfWeek: body.daysOfWeek,
     startTime: body.startTime,
     endTime: body.endTime,
-    timeZone: parseTimeZone(body),
+    timeZone: tz,
     type: body.type,
     subject: body.subject,
     pricePerStudent: 0,
-    repeatUntil: body.repeatUntil ? new Date(body.repeatUntil) : null,
+    repeatUntil: parseRepeatUntilInput(body.repeatUntil ?? null, tz),
     students: {
       create: body.studentIds.map((studentId) => ({ studentId })),
     },

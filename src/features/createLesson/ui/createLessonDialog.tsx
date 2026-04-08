@@ -128,14 +128,14 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
       }
 
       await createRecurring({
-        daysOfWeek: recurringDays.join(','),
+        daysOfWeek: recurringDays.map((d) => Number(d)).join(','),
         startTime: rs.format('HH:mm'),
         endTime: re.format('HH:mm'),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         type,
         subject,
         studentIds: selectedStudents.map((s) => s.id),
-        repeatUntil: repeatUntil?.toISOString(),
+        repeatUntil: repeatUntil ? repeatUntil.format('YYYY-MM-DD') : undefined,
       });
     } else {
       if (!startTime || !endTime) return;
@@ -312,7 +312,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 label="Повторювати до (необов'язково)"
                 value={repeatUntil}
                 onChange={setRepeatUntil}
-                minDate={dayjs()}
+                minDate={dayjs().add(1, 'day')}
                 slotProps={{
                   textField: { fullWidth: true },
                   field: { clearable: true },

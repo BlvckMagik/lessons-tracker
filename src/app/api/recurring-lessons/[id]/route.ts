@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/shared/lib/prisma';
+import { parseRepeatUntilInput } from '@/shared/lib/repeatUntilParse';
+
+const DEFAULT_TIMEZONE = 'Europe/Kyiv';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -25,6 +28,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = await params;
   const body = await req.json();
+  const idNum = Number(id);
 
   const data: Record<string, unknown> = {};
   if (body.active !== undefined) data.active = body.active;
@@ -34,13 +38,25 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.type) data.type = body.type;
   if (body.subject) data.subject = body.subject;
   if (body.pricePerStudent !== undefined) data.pricePerStudent = body.pricePerStudent;
-  if (body.repeatUntil !== undefined) data.repeatUntil = body.repeatUntil ? new Date(body.repeatUntil) : null;
+  if (body.repeatUntil !== undefined) {
+    let tz = DEFAULT_TIMEZONE;
+    if (typeof body.timeZone === 'string' && isValidIanaTimeZone(body.timeZone.trim())) {
+      tz = body.timeZone.trim();
+    } else {
+      const row = await prisma.recurringLesson.findUnique({
+        where: { id: idNum },
+        select: { timeZone: true },
+      });
+      if (row?.timeZone) tz = row.timeZone;
+    }
+    data.repeatUntil = body.repeatUntil ? parseRepeatUntilInput(body.repeatUntil, tz) : null;
+  }
   if (typeof body.timeZone === 'string' && isValidIanaTimeZone(body.timeZone.trim())) {
     data.timeZone = body.timeZone.trim();
   }
 
   const recurring = await prisma.recurringLesson.update({
-    where: { id: Number(id) },
+    where: { id: idNum },
     data,
     include: { students: { include: { student: true } }, lessons: { select: { id: true } } },
   });
