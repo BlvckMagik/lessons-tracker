@@ -9,6 +9,7 @@ import type {
   EventInput,
   DateSelectArg,
   EventClickArg,
+  EventDropArg,
 } from "@fullcalendar/core";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import {
@@ -35,6 +36,7 @@ import {
   useGetLessonsQuery,
   useDeleteLessonMutation,
   useDeleteFutureLessonsMutation,
+  useUpdateLessonMutation,
 } from "@/entities/lesson/api/lessonApi";
 import { useDeferredDelete } from "@/features/deferredDelete";
 import type { Lesson } from "@/entities/lesson/model/types";
@@ -53,6 +55,23 @@ const statusColorMap: Record<string, string> = {
   MISSED: "#fbbf24",
   CANCELLED: "#f87171",
 };
+
+const HALF_HOUR_MS = 30 * 60 * 1000;
+
+function roundToHalfHour(d: Date): Date {
+  return new Date(Math.round(d.getTime() / HALF_HOUR_MS) * HALF_HOUR_MS);
+}
+
+function mergeCalendarDateWithTime(calendarDate: Date, timeSource: Date): Date {
+  const out = new Date(calendarDate);
+  out.setHours(
+    timeSource.getHours(),
+    timeSource.getMinutes(),
+    timeSource.getSeconds(),
+    timeSource.getMilliseconds(),
+  );
+  return roundToHalfHour(out);
+}
 
 function CalendarSkeleton() {
   return (
@@ -142,6 +161,7 @@ export function LessonCalendar() {
   const { data: lessons = [], isLoading } = useGetLessonsQuery();
   const [deleteLesson] = useDeleteLessonMutation();
   const [deleteFutureLessons] = useDeleteFutureLessonsMutation();
+  const [updateLesson] = useUpdateLessonMutation();
   const { scheduleDelete } = useDeferredDelete();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -174,6 +194,8 @@ export function LessonCalendar() {
           title: `${LESSON_SUBJECT_LABELS[lesson.subject]} — ${studentNames}`,
           start: lesson.startTime,
           end: lesson.endTime,
+          startEditable: lesson.status === LESSON_STATUSES.PLANNED,
+          durationEditable: false,
           backgroundColor: needsAction
             ? "transparent"
             : statusColorMap[lesson.status],
@@ -204,6 +226,39 @@ export function LessonCalendar() {
     setSelectedLessonId(lesson.id);
     setPopoverAnchor(info.el);
   }, []);
+
+  const handleEventDrop = useCallback(
+    async (info: EventDropArg) => {
+      const lesson = info.event.extendedProps.lesson as Lesson;
+      const oldStart = new Date(lesson.startTime);
+      const oldEnd = new Date(lesson.endTime);
+      const durationMs = oldEnd.getTime() - oldStart.getTime();
+      const rawStart = info.event.start;
+      if (!rawStart) {
+        info.revert();
+        return;
+      }
+      let newStart: Date;
+      if (info.view.type === "dayGridMonth") {
+        newStart = mergeCalendarDateWithTime(rawStart, oldStart);
+      } else {
+        newStart = roundToHalfHour(new Date(rawStart.getTime()));
+      }
+      const newEnd = new Date(newStart.getTime() + durationMs);
+      try {
+        await updateLesson({
+          id: lesson.id,
+          data: {
+            startTime: newStart.toISOString(),
+            endTime: newEnd.toISOString(),
+          },
+        }).unwrap();
+      } catch {
+        info.revert();
+      }
+    },
+    [updateLesson],
+  );
 
   const handleDelete = () => {
     if (!selectedLesson) return;
@@ -334,6 +389,16 @@ export function LessonCalendar() {
               boxShadow: `0 4px 16px ${alpha("#000", 0.3)}`,
             },
           },
+          "& .fc-event.fc-event-draggable": {
+            cursor: "grab",
+            "&:active": {
+              cursor: "grabbing",
+            },
+          },
+          "& .fc-event.fc-event-dragging": {
+            cursor: "grabbing",
+            boxShadow: `0 8px 24px ${alpha("#000", 0.45)}`,
+          },
           "& .fc-event-needs-action": {
             border: "2px solid #818cf8 !important",
             backgroundColor: `${alpha("#6366f1", 0.06)} !important`,
@@ -384,14 +449,16 @@ export function LessonCalendar() {
           firstDay={1}
           selectable
           selectMirror
-          editable={false}
+          editable
+          eventDurationEditable={false}
           events={events}
           select={handleSelect}
           dateClick={handleDateClick}
           eventClick={handleEventClick}
+          eventDrop={handleEventDrop}
           allDaySlot={false}
           slotDuration="01:00:00"
-          snapDuration="01:00:00"
+          snapDuration="00:30:00"
           slotLabelInterval="01:00:00"
           slotMinTime="07:00:00"
           slotMaxTime="23:00:00"

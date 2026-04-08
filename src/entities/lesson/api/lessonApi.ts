@@ -43,6 +43,23 @@ export const lessonApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
+      async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
+        if (data.startTime === undefined || data.endTime === undefined) return;
+        const patches = dispatch(
+          lessonApi.util.updateQueryData('getLessons', undefined, (draft) => {
+            const lesson = draft.find((l) => l.id === id);
+            if (lesson) {
+              lesson.startTime = data.startTime as string;
+              lesson.endTime = data.endTime as string;
+            }
+          }),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patches.undo();
+        }
+      },
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Lesson', id },
         { type: 'Lesson', id: 'LIST' },

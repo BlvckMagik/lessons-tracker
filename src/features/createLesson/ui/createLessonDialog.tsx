@@ -52,6 +52,10 @@ const SlideTransition = forwardRef(function SlideTransition(
 
 const DAY_LABELS = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
 
+function snapToFullHour(d: Dayjs): Dayjs {
+  return d.minute(0).second(0).millisecond(0);
+}
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -83,12 +87,19 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
 
   useEffect(() => {
     if (open) {
-      const defStart = defaultStart ? dayjs(defaultStart) : dayjs().startOf('hour').add(1, 'hour');
-      const defEnd = defaultEnd ? dayjs(defaultEnd) : dayjs().startOf('hour').add(2, 'hour');
+      let defStart = defaultStart
+        ? snapToFullHour(dayjs(defaultStart))
+        : snapToFullHour(dayjs().add(1, 'hour'));
+      let defEnd = defaultEnd
+        ? snapToFullHour(dayjs(defaultEnd))
+        : snapToFullHour(dayjs().add(2, 'hour'));
+      if (!defEnd.isAfter(defStart)) {
+        defEnd = defStart.add(1, 'hour');
+      }
       setStartTime(defStart);
       setEndTime(defEnd);
-      setRecurringStartTime(defStart);
-      setRecurringEndTime(defEnd);
+      setRecurringStartTime(snapToFullHour(defStart));
+      setRecurringEndTime(snapToFullHour(defEnd));
       if (defaultStart) {
         setRecurringDays([defaultStart.getDay()]);
       }
@@ -110,10 +121,16 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
     if (isRecurring) {
       if (recurringDays.length === 0 || !recurringStartTime || !recurringEndTime) return;
 
+      const rs = snapToFullHour(recurringStartTime);
+      let re = snapToFullHour(recurringEndTime);
+      if (!re.isAfter(rs)) {
+        re = rs.add(1, 'hour');
+      }
+
       await createRecurring({
         daysOfWeek: recurringDays.join(','),
-        startTime: recurringStartTime.format('HH:mm'),
-        endTime: recurringEndTime.format('HH:mm'),
+        startTime: rs.format('HH:mm'),
+        endTime: re.format('HH:mm'),
         type,
         subject,
         studentIds: selectedStudents.map((s) => s.id),
@@ -122,11 +139,17 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
     } else {
       if (!startTime || !endTime) return;
 
+      const s = snapToFullHour(startTime);
+      let e = snapToFullHour(endTime);
+      if (!e.isAfter(s)) {
+        e = s.add(1, 'hour');
+      }
+
       await createLesson({
         type,
         subject,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
+        startTime: s.toISOString(),
+        endTime: e.toISOString(),
         studentIds: selectedStudents.map((s) => s.id),
       });
     }
@@ -269,17 +292,17 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 <TimePicker
                   label="Початок"
                   value={recurringStartTime}
-                  onChange={setRecurringStartTime}
+                  onChange={(v) => setRecurringStartTime(v ? snapToFullHour(v) : null)}
                   ampm={false}
-                  minutesStep={5}
+                  minutesStep={60}
                   sx={{ flex: 1 }}
                 />
                 <TimePicker
                   label="Кінець"
                   value={recurringEndTime}
-                  onChange={setRecurringEndTime}
+                  onChange={(v) => setRecurringEndTime(v ? snapToFullHour(v) : null)}
                   ampm={false}
-                  minutesStep={5}
+                  minutesStep={60}
                   sx={{ flex: 1 }}
                 />
               </Stack>
@@ -300,17 +323,17 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
               <DateTimePicker
                 label="Початок"
                 value={startTime}
-                onChange={setStartTime}
+                onChange={(v) => setStartTime(v ? snapToFullHour(v) : null)}
                 ampm={false}
-                minutesStep={5}
+                minutesStep={60}
                 sx={{ flex: 1 }}
               />
               <DateTimePicker
                 label="Кінець"
                 value={endTime}
-                onChange={setEndTime}
+                onChange={(v) => setEndTime(v ? snapToFullHour(v) : null)}
                 ampm={false}
-                minutesStep={5}
+                minutesStep={60}
                 sx={{ flex: 1 }}
               />
             </Stack>
