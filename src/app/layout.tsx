@@ -1,13 +1,22 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { Box } from '@mui/material';
 import { Providers } from './providers';
 import { Sidebar } from '@/widgets/sidebar/ui/sidebar';
 import { SIDEBAR_COOKIE } from '@/shared/config/constants';
 
+export const viewport: Viewport = {
+  themeColor: '#6366f1',
+};
+
 export const metadata: Metadata = {
   title: 'Lesson Tracker',
   description: 'Трекінг уроків, учнів та оплат',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Lesson Tracker',
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
