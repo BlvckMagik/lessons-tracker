@@ -49,7 +49,7 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
 
   if (!recurring || !recurring.active) return 0;
 
-  const tz = resolveLessonTimeZone(recurring.timeZone);
+  const tz = resolveLessonTimeZone((recurring as unknown as { timeZone?: string | null }).timeZone);
   const days = Array.from(
     new Set(
       recurring.daysOfWeek
@@ -70,6 +70,7 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
   );
 
   const nowInTz = dayjs.tz(nowUtc.valueOf(), tz);
+  const minStartUtc = nowInTz.startOf('day').utc();
   const dow = nowInTz.day();
   const offsetFromMonday = dow === 0 ? 6 : dow - 1;
   let cursor = nowInTz.subtract(offsetFromMonday, 'day').startOf('day');
@@ -89,7 +90,7 @@ export async function generateLessonInstances(recurringLessonId: number, weeksAh
       if (!existingDates.has(dateStr)) {
         const startUtc = wallClockToUtc(dateStr, startH, startM, tz);
         const endUtc = wallClockToUtc(dateStr, endH, endM, tz);
-        if (endUtc.isAfter(startUtc) && !startUtc.isBefore(nowUtc)) {
+        if (endUtc.isAfter(startUtc) && !startUtc.isBefore(minStartUtc)) {
           lessonsToCreate.push({
             startTime: startUtc.toDate(),
             endTime: endUtc.toDate(),
