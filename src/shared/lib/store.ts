@@ -1,10 +1,12 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { baseApi } from '@/shared/api/baseApi';
+import { calendarNavigationReducer } from '@/shared/model/calendarNavigationSlice';
 
 export const makeStore = () =>
   configureStore({
     reducer: {
       [baseApi.reducerPath]: baseApi.reducer,
+      calendarNavigation: calendarNavigationReducer,
     },
     middleware: (getDefault) => getDefault().concat(baseApi.middleware),
   });

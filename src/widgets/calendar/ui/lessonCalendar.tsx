@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -12,6 +12,7 @@ import type {
   EventDropArg,
 } from "@fullcalendar/core";
 import type { DateClickArg } from "@fullcalendar/interaction";
+import type { DatesSetArg } from "@fullcalendar/core";
 import {
   Box,
   Paper,
@@ -48,6 +49,8 @@ import {
   LESSON_SUBJECT_LABELS,
   LESSON_STATUSES,
 } from "@/shared/config/constants";
+import { useAppDispatch, useAppSelector } from "@/shared/lib/reduxHooks";
+import { setVisibleDate } from "@/shared/model/calendarNavigationSlice";
 
 const statusColorMap: Record<string, string> = {
   PLANNED: "#6366f1",
@@ -163,6 +166,8 @@ export function LessonCalendar() {
   const [deleteFutureLessons] = useDeleteFutureLessonsMutation();
   const [updateLesson] = useUpdateLessonMutation();
   const { scheduleDelete } = useDeferredDelete();
+  const dispatch = useAppDispatch();
+  const navigateRequest = useAppSelector((s) => s.calendarNavigation.navigateRequest);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<{
@@ -175,6 +180,23 @@ export function LessonCalendar() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
+
+  useEffect(() => {
+    if (!navigateRequest) return;
+    const api = calendarRef.current?.getApi();
+    if (!api) return;
+    api.gotoDate(new Date(navigateRequest.dateIso));
+  }, [navigateRequest?.id, navigateRequest?.dateIso]);
+
+  const handleDatesSet = useCallback(
+    (_info: DatesSetArg) => {
+      const api = calendarRef.current?.getApi();
+      const d = api?.getDate();
+      if (!d) return;
+      dispatch(setVisibleDate(d.toISOString()));
+    },
+    [dispatch],
+  );
 
   const selectedLesson = selectedLessonId
     ? (lessons.find((l) => l.id === selectedLessonId) ?? null)
@@ -456,6 +478,7 @@ export function LessonCalendar() {
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
+          datesSet={handleDatesSet}
           allDaySlot={false}
           slotDuration="01:00:00"
           snapDuration="00:30:00"

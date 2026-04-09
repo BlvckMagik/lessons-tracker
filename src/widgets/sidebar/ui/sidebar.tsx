@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import dayjs from 'dayjs';
 import {
   Drawer,
   List,
@@ -20,6 +21,9 @@ import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import { useAppDispatch, useAppSelector } from '@/shared/lib/reduxHooks';
+import { requestNavigateToDate } from '@/shared/model/calendarNavigationSlice';
 import { SIDEBAR_COOKIE, DRAWER_WIDTH, DRAWER_WIDTH_COLLAPSED } from '@/shared/config/constants';
 
 const navItems = [
@@ -36,6 +40,8 @@ export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [enableTransition, setEnableTransition] = useState(false);
+  const dispatch = useAppDispatch();
+  const visibleDateIso = useAppSelector((s) => s.calendarNavigation.visibleDateIso);
 
   useEffect(() => {
     requestAnimationFrame(() => setEnableTransition(true));
@@ -199,6 +205,39 @@ export function Sidebar({ defaultCollapsed = false }: SidebarProps) {
             );
           })}
         </List>
+
+        {!collapsed && pathname === '/' && (
+          <Box sx={{ mt: 2, px: 0.5 }}>
+            <Box
+              sx={{
+                border: `1px solid ${alpha('#fff', 0.06)}`,
+                borderRadius: 2,
+                backgroundColor: alpha('#fff', 0.02),
+                overflow: 'hidden',
+              }}
+            >
+              <DateCalendar
+                value={visibleDateIso ? dayjs(visibleDateIso) : dayjs()}
+                onChange={(v) => {
+                  if (!v) return;
+                  dispatch(requestNavigateToDate(v.startOf('day').toISOString()));
+                }}
+                showDaysOutsideCurrentMonth
+                fixedWeekNumber={6}
+                sx={{
+                  width: '100%',
+                  m: 0,
+                  '& .MuiPickersCalendarHeader-root': { px: 1.5, pt: 1.25 },
+                  '& .MuiDayCalendar-header': { px: 1.25 },
+                  '& .MuiPickersDay-root': { borderRadius: 2 },
+                  '& .MuiPickersDay-today': {
+                    borderColor: alpha('#6366f1', 0.6),
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+        )}
       </Box>
 
       <Box sx={{ mt: 'auto', p: 1.5, display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end' }}>
