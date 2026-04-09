@@ -50,7 +50,13 @@ const SlideTransition = forwardRef(function SlideTransition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const DAY_LABELS = ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+const WEEKDAY_LABELS_MONDAY_FIRST = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+
+const MONDAY_FIRST_INDEX_TO_JS_WEEKDAY = [1, 2, 3, 4, 5, 6, 0];
+
+function jsWeekdayToMondayFirstIndex(js: number): number {
+  return js === 0 ? 6 : js - 1;
+}
 
 function snapToFullHour(d: Dayjs): Dayjs {
   return d.minute(0).second(0).millisecond(0);
@@ -101,7 +107,9 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
       setRecurringStartTime(snapToFullHour(defStart));
       setRecurringEndTime(snapToFullHour(defEnd));
       if (defaultStart) {
-        setRecurringDays([defaultStart.getDay()]);
+        setRecurringDays([jsWeekdayToMondayFirstIndex(defaultStart.getDay())]);
+      } else {
+        setRecurringDays([]);
       }
     }
   }, [open, defaultStart, defaultEnd]);
@@ -128,7 +136,11 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
       }
 
       await createRecurring({
-        daysOfWeek: recurringDays.map((d) => Number(d)).join(','),
+        daysOfWeek: Array.from(
+          new Set(
+            recurringDays.map((i) => MONDAY_FIRST_INDEX_TO_JS_WEEKDAY[Number(i)]),
+          ),
+        ).join(','),
         startTime: rs.format('HH:mm'),
         endTime: re.format('HH:mm'),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -283,7 +295,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                     },
                   }}
                 >
-                  {DAY_LABELS.map((label, idx) => (
+                  {WEEKDAY_LABELS_MONDAY_FIRST.map((label, idx) => (
                     <ToggleButton key={idx} value={idx}>{label}</ToggleButton>
                   ))}
                 </ToggleButtonGroup>
