@@ -24,8 +24,10 @@ export async function PUT(req: NextRequest) {
   const settings = await prisma.settings.update({
     where: { id: SETTINGS_ID },
     data: {
-      defaultIndividualPrice: body.defaultIndividualPrice,
-      defaultGroupPrice: body.defaultGroupPrice,
+      ...(body.defaultIndividualPrice !== undefined && { defaultIndividualPrice: body.defaultIndividualPrice }),
+      ...(body.defaultGroupPrice !== undefined && { defaultGroupPrice: body.defaultGroupPrice }),
+      ...(body.telegramChatId !== undefined && { telegramChatId: body.telegramChatId }),
+      ...(body.telegramConversationState !== undefined && { telegramConversationState: body.telegramConversationState }),
     },
   });
   return NextResponse.json(settings);

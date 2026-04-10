@@ -53,6 +53,8 @@ export async function GET(req: NextRequest) {
         pricePerStudent: price,
         paid: ls.paid,
         charged,
+        notes: ls.lesson.notes ?? null,
+        rating: ls.lesson.rating ?? null,
       };
     });
 
