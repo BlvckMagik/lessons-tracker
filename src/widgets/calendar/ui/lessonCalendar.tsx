@@ -10,6 +10,7 @@ import type {
   DateSelectArg,
   EventClickArg,
   EventDropArg,
+  EventResizeDoneArg,
 } from "@fullcalendar/core";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import type { DatesSetArg } from "@fullcalendar/core";
@@ -252,6 +253,26 @@ export function LessonCalendar() {
     setPopoverAnchor(info.el);
   }, []);
 
+  const handleEventResize = useCallback(
+    async (info: EventResizeDoneArg) => {
+      const lesson = info.event.extendedProps.lesson as Lesson;
+      const newEnd = info.event.end;
+      if (!newEnd) {
+        info.revert();
+        return;
+      }
+      try {
+        await updateLesson({
+          id: lesson.id,
+          data: { endTime: newEnd.toISOString() },
+        }).unwrap();
+      } catch {
+        info.revert();
+      }
+    },
+    [updateLesson],
+  );
+
   const handleEventDrop = useCallback(
     async (info: EventDropArg) => {
       const lesson = info.event.extendedProps.lesson as Lesson;
@@ -475,12 +496,13 @@ export function LessonCalendar() {
           selectable
           selectMirror
           editable
-          eventDurationEditable={false}
+          eventDurationEditable
           events={events}
           select={handleSelect}
           dateClick={handleDateClick}
           eventClick={handleEventClick}
           eventDrop={handleEventDrop}
+          eventResize={handleEventResize}
           datesSet={handleDatesSet}
           allDaySlot={false}
           slotDuration="01:00:00"
