@@ -46,6 +46,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import SearchIcon from "@mui/icons-material/Search";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import StarIcon from "@mui/icons-material/Star";
 import {
   useGetReportsQuery,
   useUpdatePaymentMutation,
@@ -90,6 +91,9 @@ function LessonDetailsTable({
           <TableCell align="right">Ціна</TableCell>
           <TableCell align="center">Нараховано</TableCell>
           <TableCell align="center">Оплачено</TableCell>
+          <TableCell sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', py: 0.75 }}>
+            Нотатки
+          </TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
@@ -178,6 +182,30 @@ function LessonDetailsTable({
                     },
                   }}
                 />
+              </TableCell>
+              <TableCell sx={{ py: 0.75 }}>
+                {lesson.rating !== null && lesson.rating !== undefined && (
+                  <Stack direction="row" spacing={0.25} sx={{ mb: lesson.notes ? 0.5 : 0 }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <StarIcon
+                        key={s}
+                        sx={{ fontSize: 12, color: s <= (lesson.rating ?? 0) ? '#fbbf24' : 'rgba(255,255,255,0.1)' }}
+                      />
+                    ))}
+                  </Stack>
+                )}
+                {lesson.notes ? (
+                  <Typography
+                    fontSize="0.7rem"
+                    sx={{ color: 'rgba(255,255,255,0.45)', maxWidth: 300, whiteSpace: 'pre-wrap' }}
+                  >
+                    {lesson.notes}
+                  </Typography>
+                ) : (
+                  !lesson.rating && (
+                    <Typography fontSize="0.7rem" sx={{ color: 'rgba(255,255,255,0.15)' }}>—</Typography>
+                  )
+                )}
               </TableCell>
             </TableRow>
           );
