@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, forwardRef } from 'react';
+import { useState, useEffect, forwardRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -23,25 +23,25 @@ import {
   FormControlLabel,
   ToggleButton,
   ToggleButtonGroup,
-} from '@mui/material';
-import type { TransitionProps } from '@mui/material/transitions';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs, { Dayjs } from 'dayjs';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import { useGetStudentsQuery } from '@/entities/student/api/studentApi';
-import { useCreateLessonMutation } from '@/entities/lesson/api/lessonApi';
-import { useCreateRecurringLessonMutation } from '@/entities/recurringLesson/api/recurringLessonApi';
-import { useGetSettingsQuery } from '@/entities/settings/api/settingsApi';
-import type { LessonType, LessonSubject } from '@/entities/lesson/model/types';
-import type { Student } from '@/entities/student/model/types';
+} from "@mui/material";
+import type { TransitionProps } from "@mui/material/transitions";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
+import RepeatIcon from "@mui/icons-material/Repeat";
+import { useGetStudentsQuery } from "@/entities/student/api/studentApi";
+import { useCreateLessonMutation } from "@/entities/lesson/api/lessonApi";
+import { useCreateRecurringLessonMutation } from "@/entities/recurringLesson/api/recurringLessonApi";
+import { useGetSettingsQuery } from "@/entities/settings/api/settingsApi";
+import type { LessonType, LessonSubject } from "@/entities/lesson/model/types";
+import type { Student } from "@/entities/student/model/types";
 import {
   LESSON_TYPES,
   LESSON_SUBJECTS,
   LESSON_TYPE_LABELS,
   LESSON_SUBJECT_LABELS,
-} from '@/shared/config/constants';
+} from "@/shared/config/constants";
 
 const SlideTransition = forwardRef(function SlideTransition(
   props: TransitionProps & { children: React.ReactElement },
@@ -50,7 +50,7 @@ const SlideTransition = forwardRef(function SlideTransition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-const WEEKDAY_LABELS_MONDAY_FIRST = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+const WEEKDAY_LABELS_MONDAY_FIRST = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"];
 
 const MONDAY_FIRST_INDEX_TO_JS_WEEKDAY = [1, 2, 3, 4, 5, 6, 0];
 
@@ -69,23 +69,31 @@ interface Props {
   defaultEnd?: Date | null;
 }
 
-export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: Props) {
+export function CreateLessonDialog({
+  open,
+  onClose,
+  defaultStart,
+  defaultEnd,
+}: Props) {
   const [type, setType] = useState<LessonType>(LESSON_TYPES.INDIVIDUAL);
-  const [subject, setSubject] = useState<LessonSubject>(LESSON_SUBJECTS.ENGLISH);
+  const [subject, setSubject] = useState<LessonSubject>(LESSON_SUBJECTS.GERMAN);
   const [startTime, setStartTime] = useState<Dayjs | null>(null);
   const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
 
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringDays, setRecurringDays] = useState<number[]>([]);
-  const [recurringStartTime, setRecurringStartTime] = useState<Dayjs | null>(null);
+  const [recurringStartTime, setRecurringStartTime] = useState<Dayjs | null>(
+    null,
+  );
   const [recurringEndTime, setRecurringEndTime] = useState<Dayjs | null>(null);
   const [repeatUntil, setRepeatUntil] = useState<Dayjs | null>(null);
 
   const { data: students = [] } = useGetStudentsQuery();
   const { data: settings } = useGetSettingsQuery();
   const [createLesson, { isLoading: isCreating }] = useCreateLessonMutation();
-  const [createRecurring, { isLoading: isCreatingRecurring }] = useCreateRecurringLessonMutation();
+  const [createRecurring, { isLoading: isCreatingRecurring }] =
+    useCreateRecurringLessonMutation();
   const isLoading = isCreating || isCreatingRecurring;
 
   const defaultIndividual = settings?.defaultIndividualPrice ?? 200;
@@ -95,12 +103,12 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
     if (open) {
       let defStart = defaultStart
         ? snapToFullHour(dayjs(defaultStart))
-        : snapToFullHour(dayjs().add(1, 'hour'));
+        : snapToFullHour(dayjs().add(1, "hour"));
       let defEnd = defaultEnd
         ? snapToFullHour(dayjs(defaultEnd))
-        : snapToFullHour(dayjs().add(2, 'hour'));
+        : snapToFullHour(dayjs().add(2, "hour"));
       if (!defEnd.isAfter(defStart)) {
-        defEnd = defStart.add(1, 'hour');
+        defEnd = defStart.add(1, "hour");
       }
       setStartTime(defStart);
       setEndTime(defEnd);
@@ -121,33 +129,43 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
     return student.groupPrice ?? defaultGroup;
   };
 
-  const totalPrice = selectedStudents.reduce((sum, s) => sum + getStudentPrice(s), 0);
+  const totalPrice = selectedStudents.reduce(
+    (sum, s) => sum + getStudentPrice(s),
+    0,
+  );
 
   const handleSubmit = async () => {
     if (selectedStudents.length === 0) return;
 
     if (isRecurring) {
-      if (recurringDays.length === 0 || !recurringStartTime || !recurringEndTime) return;
+      if (
+        recurringDays.length === 0 ||
+        !recurringStartTime ||
+        !recurringEndTime
+      )
+        return;
 
       const rs = snapToFullHour(recurringStartTime);
       let re = snapToFullHour(recurringEndTime);
       if (!re.isAfter(rs)) {
-        re = rs.add(1, 'hour');
+        re = rs.add(1, "hour");
       }
 
       await createRecurring({
         daysOfWeek: Array.from(
           new Set(
-            recurringDays.map((i) => MONDAY_FIRST_INDEX_TO_JS_WEEKDAY[Number(i)]),
+            recurringDays.map(
+              (i) => MONDAY_FIRST_INDEX_TO_JS_WEEKDAY[Number(i)],
+            ),
           ),
-        ).join(','),
-        startTime: rs.format('HH:mm'),
-        endTime: re.format('HH:mm'),
+        ).join(","),
+        startTime: rs.format("HH:mm"),
+        endTime: re.format("HH:mm"),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         type,
         subject,
         studentIds: selectedStudents.map((s) => s.id),
-        repeatUntil: repeatUntil ? repeatUntil.format('YYYY-MM-DD') : undefined,
+        repeatUntil: repeatUntil ? repeatUntil.format("YYYY-MM-DD") : undefined,
       });
     } else {
       if (!startTime || !endTime) return;
@@ -155,7 +173,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
       const s = snapToFullHour(startTime);
       let e = snapToFullHour(endTime);
       if (!e.isAfter(s)) {
-        e = s.add(1, 'hour');
+        e = s.add(1, "hour");
       }
 
       await createLesson({
@@ -172,7 +190,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
 
   const handleClose = () => {
     setType(LESSON_TYPES.INDIVIDUAL);
-    setSubject(LESSON_SUBJECTS.ENGLISH);
+    setSubject(LESSON_SUBJECTS.GERMAN);
     setStartTime(null);
     setEndTime(null);
     setSelectedStudents([]);
@@ -185,7 +203,10 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
   };
 
   const canSubmit = isRecurring
-    ? recurringDays.length > 0 && recurringStartTime && recurringEndTime && selectedStudents.length > 0
+    ? recurringDays.length > 0 &&
+      recurringStartTime &&
+      recurringEndTime &&
+      selectedStudents.length > 0
     : startTime && endTime && selectedStudents.length > 0;
 
   return (
@@ -198,12 +219,15 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
     >
       <DialogTitle component="div" sx={{ pb: 0.5 }}>
         <Typography variant="h6" fontSize="1.1rem" fontWeight={700}>
-          {isRecurring ? 'Регулярний урок' : 'Новий урок'}
+          {isRecurring ? "Регулярний урок" : "Новий урок"}
         </Typography>
-        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.35)', mt: 0.25 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: "rgba(255,255,255,0.35)", mt: 0.25 }}
+        >
           {isRecurring
-            ? 'Створіть щотижневий розклад уроків'
-            : 'Заплануйте новий урок у розкладі'}
+            ? "Створіть щотижневий розклад уроків"
+            : "Заплануйте новий урок у розкладі"}
         </Typography>
       </DialogTitle>
       <DialogContent>
@@ -218,7 +242,12 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
             }
             label={
               <Stack direction="row" alignItems="center" spacing={0.75}>
-                <RepeatIcon sx={{ fontSize: 18, color: isRecurring ? '#818cf8' : 'rgba(255,255,255,0.4)' }} />
+                <RepeatIcon
+                  sx={{
+                    fontSize: 18,
+                    color: isRecurring ? "#818cf8" : "rgba(255,255,255,0.4)",
+                  }}
+                />
                 <Typography fontSize="0.875rem" fontWeight={500}>
                   Повторювати щотижня
                 </Typography>
@@ -227,9 +256,11 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
             sx={{
               p: 1,
               borderRadius: 2.5,
-              backgroundColor: isRecurring ? alpha('#6366f1', 0.08) : alpha('#fff', 0.02),
-              border: `1px solid ${isRecurring ? alpha('#6366f1', 0.2) : alpha('#fff', 0.06)}`,
-              transition: 'all 0.2s ease',
+              backgroundColor: isRecurring
+                ? alpha("#6366f1", 0.08)
+                : alpha("#fff", 0.02),
+              border: `1px solid ${isRecurring ? alpha("#6366f1", 0.2) : alpha("#fff", 0.06)}`,
+              transition: "all 0.2s ease",
               mx: 0,
             }}
           />
@@ -243,13 +274,18 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 onChange={(e) => {
                   const newType = e.target.value as LessonType;
                   setType(newType);
-                  if (newType === LESSON_TYPES.INDIVIDUAL && selectedStudents.length > 1) {
+                  if (
+                    newType === LESSON_TYPES.INDIVIDUAL &&
+                    selectedStudents.length > 1
+                  ) {
                     setSelectedStudents(selectedStudents.slice(0, 1));
                   }
                 }}
               >
                 {Object.entries(LESSON_TYPE_LABELS).map(([key, label]) => (
-                  <MenuItem key={key} value={key}>{label}</MenuItem>
+                  <MenuItem key={key} value={key}>
+                    {label}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -261,7 +297,9 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 onChange={(e) => setSubject(e.target.value as LessonSubject)}
               >
                 {Object.entries(LESSON_SUBJECT_LABELS).map(([key, label]) => (
-                  <MenuItem key={key} value={key}>{label}</MenuItem>
+                  <MenuItem key={key} value={key}>
+                    {label}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -270,7 +308,14 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
           {isRecurring ? (
             <>
               <Box>
-                <Typography variant="body2" sx={{ mb: 1, color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mb: 1,
+                    color: "rgba(255,255,255,0.5)",
+                    fontSize: "0.8rem",
+                  }}
+                >
                   Дні тижня
                 </Typography>
                 <ToggleButtonGroup
@@ -279,24 +324,26 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                   size="small"
                   sx={{
                     gap: 0.5,
-                    '& .MuiToggleButton-root': {
-                      borderRadius: '8px !important',
-                      border: `1px solid ${alpha('#fff', 0.1)} !important`,
+                    "& .MuiToggleButton-root": {
+                      borderRadius: "8px !important",
+                      border: `1px solid ${alpha("#fff", 0.1)} !important`,
                       px: 1.5,
                       py: 0.75,
-                      fontSize: '0.8rem',
+                      fontSize: "0.8rem",
                       fontWeight: 600,
-                      color: 'rgba(255,255,255,0.4)',
-                      '&.Mui-selected': {
-                        backgroundColor: alpha('#6366f1', 0.2),
-                        color: '#818cf8',
-                        borderColor: `${alpha('#6366f1', 0.3)} !important`,
+                      color: "rgba(255,255,255,0.4)",
+                      "&.Mui-selected": {
+                        backgroundColor: alpha("#6366f1", 0.2),
+                        color: "#818cf8",
+                        borderColor: `${alpha("#6366f1", 0.3)} !important`,
                       },
                     },
                   }}
                 >
                   {WEEKDAY_LABELS_MONDAY_FIRST.map((label, idx) => (
-                    <ToggleButton key={idx} value={idx}>{label}</ToggleButton>
+                    <ToggleButton key={idx} value={idx}>
+                      {label}
+                    </ToggleButton>
                   ))}
                 </ToggleButtonGroup>
               </Box>
@@ -305,7 +352,9 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 <TimePicker
                   label="Початок"
                   value={recurringStartTime}
-                  onChange={(v) => setRecurringStartTime(v ? snapToFullHour(v) : null)}
+                  onChange={(v) =>
+                    setRecurringStartTime(v ? snapToFullHour(v) : null)
+                  }
                   ampm={false}
                   minutesStep={60}
                   sx={{ flex: 1 }}
@@ -313,7 +362,9 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 <TimePicker
                   label="Кінець"
                   value={recurringEndTime}
-                  onChange={(v) => setRecurringEndTime(v ? snapToFullHour(v) : null)}
+                  onChange={(v) =>
+                    setRecurringEndTime(v ? snapToFullHour(v) : null)
+                  }
                   ampm={false}
                   minutesStep={60}
                   sx={{ flex: 1 }}
@@ -324,7 +375,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                 label="Повторювати до (необов'язково)"
                 value={repeatUntil}
                 onChange={setRepeatUntil}
-                minDate={dayjs().add(1, 'day')}
+                minDate={dayjs().add(1, "day")}
                 slotProps={{
                   textField: { fullWidth: true },
                   field: { clearable: true },
@@ -374,7 +425,11 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
                     {...getTagProps({ index })}
                     key={option.id}
                     size="small"
-                    sx={{ backgroundColor: alpha('#6366f1', 0.15), color: '#818cf8', fontWeight: 600 }}
+                    sx={{
+                      backgroundColor: alpha("#6366f1", 0.15),
+                      color: "#818cf8",
+                      fontWeight: 600,
+                    }}
                   />
                 ))
               }
@@ -387,16 +442,25 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
               sx={{
                 p: 1.5,
                 borderRadius: 2,
-                backgroundColor: alpha('#6366f1', 0.06),
-                border: `1px solid ${alpha('#6366f1', 0.12)}`,
+                backgroundColor: alpha("#6366f1", 0.06),
+                border: `1px solid ${alpha("#6366f1", 0.12)}`,
               }}
             >
               {selectedStudents.map((s) => (
-                <Typography key={s.id} variant="body2" fontSize="0.8rem" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                <Typography
+                  key={s.id}
+                  variant="body2"
+                  fontSize="0.8rem"
+                  sx={{ color: "rgba(255,255,255,0.6)" }}
+                >
                   {s.name}: {getStudentPrice(s)} грн
                 </Typography>
               ))}
-              <Typography variant="body2" fontWeight={600} sx={{ color: '#818cf8', mt: 0.5 }}>
+              <Typography
+                variant="body2"
+                fontWeight={600}
+                sx={{ color: "#818cf8", mt: 0.5 }}
+              >
                 Разом: {totalPrice} грн
               </Typography>
             </Box>
@@ -404,7 +468,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={handleClose} sx={{ color: 'rgba(255,255,255,0.5)' }}>
+        <Button onClick={handleClose} sx={{ color: "rgba(255,255,255,0.5)" }}>
           Скасувати
         </Button>
         <Button
@@ -412,7 +476,7 @@ export function CreateLessonDialog({ open, onClose, defaultStart, defaultEnd }: 
           variant="contained"
           disabled={!canSubmit || isLoading}
         >
-          {isRecurring ? 'Створити розклад' : 'Створити'}
+          {isRecurring ? "Створити розклад" : "Створити"}
         </Button>
       </DialogActions>
     </Dialog>

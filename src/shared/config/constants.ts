@@ -21,8 +21,8 @@ export const LESSON_TYPE_LABELS: Record<string, string> = {
 };
 
 export const LESSON_SUBJECT_LABELS: Record<string, string> = {
-  ENGLISH: 'Англійська',
   GERMAN: 'Німецька',
+  ENGLISH: 'Англійська',
 };
 
 export const LESSON_STATUS_LABELS: Record<string, string> = {
