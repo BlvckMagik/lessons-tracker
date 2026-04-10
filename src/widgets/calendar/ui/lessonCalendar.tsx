@@ -10,9 +10,8 @@ import type {
   DateSelectArg,
   EventClickArg,
   EventDropArg,
-  EventResizeDoneArg,
 } from "@fullcalendar/core";
-import type { DateClickArg } from "@fullcalendar/interaction";
+import type { DateClickArg, EventResizeDoneArg } from "@fullcalendar/interaction";
 import type { DatesSetArg } from "@fullcalendar/core";
 import {
   Box,
