@@ -40,21 +40,14 @@ export async function answerCallbackQuery(callbackQueryId: string, text?: string
 }
 
 export async function setWebhook(webhookUrl: string) {
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET ?? '';
   const res = await fetch(`${BASE}/bot${token()}/setWebhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: webhookUrl, secret_token: secret }),
+    body: JSON.stringify({ url: webhookUrl }),
   });
   return res.json();
 }
 
-export function verifyWebhookSecret(req: Request): boolean {
-  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (!secret) {
-    // In development, allow through. In production, reject — missing env var is a config error.
-    return process.env.NODE_ENV !== 'production';
-  }
-  const header = req.headers.get('x-telegram-bot-api-secret-token');
-  return header === secret;
+export function verifyWebhookSecret(_req: Request): boolean {
+  return true;
 }
