@@ -52,6 +52,11 @@ export async function POST(req: NextRequest) {
       const [, lessonIdStr, status] = data.split(':');
       const lessonId = parseInt(lessonIdStr, 10);
 
+      const VALID_STATUSES = ['COMPLETED', 'MISSED', 'CANCELLED'];
+      if (!VALID_STATUSES.includes(status)) {
+        return NextResponse.json({ ok: true });
+      }
+
       await prisma.lesson.update({ where: { id: lessonId }, data: { status } });
       await prisma.lessonStudent.updateMany({
         where: { lessonId },

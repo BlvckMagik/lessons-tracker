@@ -45,8 +45,8 @@ export async function GET(request: Request) {
   const now = new Date();
   const reminderWindowStart = new Date(now.getTime() + 25 * 60 * 1000);
   const reminderWindowEnd = new Date(now.getTime() + 40 * 60 * 1000);
-  const statusWindowStart = new Date(now.getTime() - 25 * 60 * 1000);
-  const statusWindowEnd = new Date(now.getTime() - 5 * 60 * 1000);
+  const statusWindowStart = new Date(now.getTime() - 20 * 60 * 1000); // 20 min ago
+  const statusWindowEnd = new Date(now.getTime() - 5 * 60 * 1000);    // 5 min ago
 
   // Upcoming lesson reminders
   const upcomingLessons = await prisma.lesson.findMany({

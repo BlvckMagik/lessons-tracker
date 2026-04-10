@@ -51,7 +51,10 @@ export async function setWebhook(webhookUrl: string) {
 
 export function verifyWebhookSecret(req: Request): boolean {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (!secret) return true; // skip in dev
+  if (!secret) {
+    // In development, allow through. In production, reject — missing env var is a config error.
+    return process.env.NODE_ENV !== 'production';
+  }
   const header = req.headers.get('x-telegram-bot-api-secret-token');
   return header === secret;
 }
