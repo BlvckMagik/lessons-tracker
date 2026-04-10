@@ -33,6 +33,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PeopleIcon from "@mui/icons-material/People";
 import RepeatIcon from "@mui/icons-material/Repeat";
+import StarIcon from "@mui/icons-material/Star";
+import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
   useGetLessonsQuery,
   useDeleteLessonMutation,
@@ -179,6 +181,7 @@ export function LessonCalendar() {
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
   const calendarRef = useRef<FullCalendar>(null);
 
   useEffect(() => {
@@ -624,6 +627,41 @@ export function LessonCalendar() {
               <>
                 <Divider sx={{ my: 1.5 }} />
                 <LessonStatusButtons lesson={selectedLesson} />
+              </>
+            )}
+
+            {selectedLesson.status === "COMPLETED" && (
+              <>
+                <Divider sx={{ my: 1.5 }} />
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <Typography fontSize="0.72rem" sx={{ color: "rgba(255,255,255,0.4)", mr: 0.5 }}>
+                    Оцінка:
+                  </Typography>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Box
+                      key={star}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(null)}
+                      onClick={() =>
+                        updateLesson({
+                          id: selectedLesson.id,
+                          data: { rating: star === selectedLesson.rating ? null : star },
+                        })
+                      }
+                      sx={{
+                        cursor: "pointer",
+                        color: star <= (hoverRating ?? selectedLesson.rating ?? 0) ? "#fbbf24" : "rgba(255,255,255,0.2)",
+                        display: "flex",
+                      }}
+                    >
+                      {star <= (hoverRating ?? selectedLesson.rating ?? 0) ? (
+                        <StarIcon sx={{ fontSize: 20 }} />
+                      ) : (
+                        <StarBorderIcon sx={{ fontSize: 20 }} />
+                      )}
+                    </Box>
+                  ))}
+                </Stack>
               </>
             )}
 
