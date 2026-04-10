@@ -19,6 +19,8 @@ import {
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PeopleIcon from '@mui/icons-material/People';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import BarChartIcon from '@mui/icons-material/BarChart';
+import SettingsIcon from '@mui/icons-material/Settings';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
@@ -30,6 +32,8 @@ const navItems = [
   { label: 'Календар', href: '/', icon: <CalendarMonthIcon /> },
   { label: 'Учні', href: '/students', icon: <PeopleIcon /> },
   { label: 'Звіти', href: '/reports', icon: <AssessmentIcon /> },
+  { label: 'Аналітика', href: '/analytics', icon: <BarChartIcon /> },
+  { label: 'Налаштування', href: '/settings', icon: <SettingsIcon /> },
 ];
 
 interface SidebarProps {
