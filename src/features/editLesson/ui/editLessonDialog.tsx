@@ -23,6 +23,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
+import EventRepeatIcon from '@mui/icons-material/EventRepeat';
 import type { TransitionProps } from '@mui/material/transitions';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
@@ -33,6 +34,7 @@ import { useGetStudentsQuery } from '@/entities/student/api/studentApi';
 import {
   useUpdateLessonMutation,
   useUpdateLessonStatusMutation,
+  useUpdateFutureLessonsMutation,
 } from '@/entities/lesson/api/lessonApi';
 import { useGetSettingsQuery } from '@/entities/settings/api/settingsApi';
 import type { Lesson, LessonType, LessonSubject, LessonStatus } from '@/entities/lesson/model/types';
@@ -72,6 +74,7 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
   const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
   const [status, setStatus] = useState<LessonStatus>('PLANNED');
+  const [label, setLabel] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [rating, setRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
@@ -83,8 +86,9 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
   const { data: allStudents = [] } = useGetStudentsQuery();
   const { data: settings } = useGetSettingsQuery();
   const [updateLesson, { isLoading: isUpdating }] = useUpdateLessonMutation();
+  const [updateFutureLessons, { isLoading: isUpdatingFuture }] = useUpdateFutureLessonsMutation();
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateLessonStatusMutation();
-  const isLoading = isUpdating || isUpdatingStatus;
+  const isLoading = isUpdating || isUpdatingFuture || isUpdatingStatus;
 
   const defaultIndividual = settings?.defaultIndividualPrice ?? 200;
   const defaultGroup = settings?.defaultGroupPrice ?? 50;
@@ -96,6 +100,7 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
       setStartTime(dayjs(lesson.startTime));
       setEndTime(dayjs(lesson.endTime));
       setStatus(lesson.status);
+      setLabel(lesson.label ?? '');
       setNotes(lesson.notes ?? '');
       setRating(lesson.rating ?? null);
       setHomework(lesson.homework ?? '');
@@ -106,6 +111,7 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
       const matched = allStudents.filter((s) => studentIds.includes(s.id));
       setSelectedStudents(matched);
     } else if (!open) {
+      setLabel('');
       setNotes('');
       setRating(null);
       setHoverRating(null);
@@ -125,33 +131,46 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
 
   const totalPrice = selectedStudents.reduce((sum, s) => sum + getStudentPrice(s), 0);
 
-  const handleSubmit = async () => {
+  const buildLessonData = () => ({
+    type,
+    subject,
+    startTime: startTime!.toISOString(),
+    endTime: endTime!.toISOString(),
+    studentIds: selectedStudents.map((s) => s.id),
+    label: label.trim() || null,
+    notes: notes.trim() || null,
+    rating,
+    homework: homework.trim() || null,
+    homeworkStatus,
+    homeworkRating,
+  });
+
+  const doSave = async (scope: 'single' | 'future') => {
     if (!lesson || !startTime || !endTime || selectedStudents.length === 0) return;
 
     if (status !== lesson.status) {
       await updateStatus({ id: lesson.id, status });
     }
 
-    await updateLesson({
-      id: lesson.id,
-      data: {
-        type,
-        subject,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        studentIds: selectedStudents.map((s) => s.id),
-        notes: notes.trim() || null,
-        rating,
-        homework: homework.trim() || null,
-        homeworkStatus,
-        homeworkRating,
-      },
-    });
+    if (scope === 'future') {
+      await updateFutureLessons({ id: lesson.id, data: { type, subject, studentIds: selectedStudents.map((s) => s.id), label: label.trim() || null } });
+      // Also update per-lesson fields on just this lesson
+      await updateLesson({ id: lesson.id, data: { startTime: startTime.toISOString(), endTime: endTime.toISOString(), notes: notes.trim() || null, rating, homework: homework.trim() || null, homeworkStatus, homeworkRating } });
+    } else {
+      await updateLesson({ id: lesson.id, data: buildLessonData() });
+    }
 
     onClose();
   };
 
+  const handleSubmit = (scope: 'single' | 'future') => {
+    void doSave(scope);
+  };
+
   if (!lesson) return null;
+
+  const isRecurring = !!lesson.recurringLessonId;
+  const canSave = !!startTime && !!endTime && selectedStudents.length > 0 && !isLoading;
 
   return (
     <Dialog
@@ -373,6 +392,16 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
             </>
           )}
 
+          <TextField
+            label="Лейбл"
+            fullWidth
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Напр. Іспит, Пробний урок..."
+            size="small"
+            slotProps={{ htmlInput: { maxLength: 30 } }}
+          />
+
           <Divider />
 
           <Stack direction="row" spacing={2}>
@@ -480,13 +509,39 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
         <Button onClick={onClose} sx={{ color: 'rgba(255,255,255,0.5)' }}>
           Скасувати
         </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!startTime || !endTime || selectedStudents.length === 0 || isLoading}
-        >
-          Зберегти
-        </Button>
+        {isRecurring ? (
+          <Stack direction="row" spacing={1}>
+            <Button
+              onClick={() => handleSubmit('single')}
+              variant="outlined"
+              disabled={!canSave}
+              sx={{
+                borderColor: alpha('#fff', 0.15),
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: '0.8rem',
+                '&:hover': { borderColor: alpha('#6366f1', 0.4), color: '#818cf8' },
+              }}
+            >
+              Цей урок
+            </Button>
+            <Button
+              onClick={() => handleSubmit('future')}
+              variant="contained"
+              disabled={!canSave}
+              startIcon={<EventRepeatIcon sx={{ fontSize: '16px !important' }} />}
+            >
+              Цей та наступні
+            </Button>
+          </Stack>
+        ) : (
+          <Button
+            onClick={() => handleSubmit('single')}
+            variant="contained"
+            disabled={!canSave}
+          >
+            Зберегти
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

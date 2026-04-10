@@ -25,6 +25,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.startTime) data.startTime = new Date(body.startTime);
   if (body.endTime) data.endTime = new Date(body.endTime);
   if (body.status) data.status = body.status;
+  if (body.label !== undefined) data.label = body.label;
   if (body.notes !== undefined) data.notes = body.notes;
   if (body.rating !== undefined) data.rating = body.rating;
   if (body.homework !== undefined) data.homework = body.homework;

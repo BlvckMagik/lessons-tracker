@@ -36,6 +36,7 @@ model Lesson {
   status            String        @default("PLANNED")
   pricePerStudent   Int           @default(0)
   recurringLessonId Int?
+  label             String?
   notes             String?
   rating            Int?
   homework          String?

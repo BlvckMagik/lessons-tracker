@@ -10,6 +10,7 @@ import type {
   DateSelectArg,
   EventClickArg,
   EventDropArg,
+  EventContentArg,
 } from "@fullcalendar/core";
 import type { DateClickArg, EventResizeDoneArg } from "@fullcalendar/interaction";
 import type { DatesSetArg } from "@fullcalendar/core";
@@ -231,6 +232,46 @@ export function LessonCalendar() {
       }),
     [lessons],
   );
+
+  const renderEventContent = useCallback((arg: EventContentArg) => {
+    const lesson = arg.event.extendedProps.lesson as Lesson;
+    return (
+      <Box sx={{ position: "relative", width: "100%", overflow: "hidden", px: "4px", py: "2px" }}>
+        {lesson.label && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+              zIndex: 1,
+              backgroundColor: "rgba(0,0,0,0.35)",
+              color: "#fff",
+              fontSize: "0.6rem",
+              fontWeight: 700,
+              lineHeight: 1,
+              px: "5px",
+              py: "2px",
+              borderRadius: "4px",
+              maxWidth: "50%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {lesson.label}
+          </Box>
+        )}
+        {arg.timeText && (
+          <div className="fc-event-time" style={{ fontSize: "0.72rem", opacity: 0.8 }}>
+            {arg.timeText}
+          </div>
+        )}
+        <div className="fc-event-title" style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {arg.event.title}
+        </div>
+      </Box>
+    );
+  }, []);
 
   const handleSelect = useCallback((info: DateSelectArg) => {
     setSelectInfo({ start: info.start, end: info.end });
@@ -497,6 +538,7 @@ export function LessonCalendar() {
           editable
           eventDurationEditable
           events={events}
+          eventContent={renderEventContent}
           select={handleSelect}
           dateClick={handleDateClick}
           eventClick={handleEventClick}

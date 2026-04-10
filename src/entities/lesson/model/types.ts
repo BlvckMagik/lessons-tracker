@@ -23,6 +23,7 @@ export interface Lesson {
   status: LessonStatus;
   pricePerStudent: number;
   recurringLessonId: number | null;
+  label: string | null;
   notes: string | null;
   rating: number | null;
   homework: string | null;
@@ -48,6 +49,7 @@ export interface UpdateLessonDto {
   endTime?: string;
   studentIds?: number[];
   status?: LessonStatus;
+  label?: string | null;
   notes?: string | null;
   rating?: number | null;
   homework?: string | null;

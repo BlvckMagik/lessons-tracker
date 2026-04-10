@@ -75,6 +75,15 @@ export const lessonApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: 'Lesson', id: 'LIST' }, { type: 'Report' }],
     }),
 
+    updateFutureLessons: build.mutation<{ updated: Lesson; count: number }, { id: number; data: UpdateLessonDto }>({
+      query: ({ id, data }) => ({
+        url: `lessons/${id}/update-future`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: [{ type: 'Lesson', id: 'LIST' }, { type: 'Report' }],
+    }),
+
     deleteFutureLessons: build.mutation<{ deleted: number }, number>({
       query: (id) => ({
         url: `lessons/${id}/delete-future`,
@@ -180,6 +189,7 @@ export const {
   useGetLessonQuery,
   useCreateLessonMutation,
   useUpdateLessonMutation,
+  useUpdateFutureLessonsMutation,
   useDeleteLessonMutation,
   useDeleteFutureLessonsMutation,
   useUpdateLessonStatusMutation,
