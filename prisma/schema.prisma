@@ -8,9 +8,11 @@ datasource db {
 }
 
 model Settings {
-  id                     Int @id @default(1)
-  defaultIndividualPrice Int @default(200)
-  defaultGroupPrice      Int @default(50)
+  id                        Int     @id @default(autoincrement())
+  defaultIndividualPrice    Int     @default(200)
+  defaultGroupPrice         Int     @default(50)
+  telegramChatId            String?
+  telegramConversationState String?
 }
 
 model Student {
@@ -26,18 +28,21 @@ model Student {
 }
 
 model Lesson {
-  id                Int              @id @default(autoincrement())
+  id                Int           @id @default(autoincrement())
   type              String
   subject           String
   startTime         DateTime
   endTime           DateTime
-  status            String           @default("PLANNED")
-  pricePerStudent   Int              @default(0)
+  status            String        @default("PLANNED")
+  pricePerStudent   Int           @default(0)
   recurringLessonId Int?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  notes             String?
+  rating            Int?
+  reminderSentAt    DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
   students          LessonStudent[]
-  recurringLesson   RecurringLesson? @relation(fields: [recurringLessonId], references: [id], onDelete: SetNull)
+  recurringLesson   RecurringLesson? @relation(fields: [recurringLessonId], references: [id])
 }
 
 model LessonStudent {
