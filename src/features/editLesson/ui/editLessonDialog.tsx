@@ -27,6 +27,8 @@ import type { TransitionProps } from '@mui/material/transitions';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import RepeatIcon from '@mui/icons-material/Repeat';
+import StarIcon from '@mui/icons-material/Star';
+import StarBorderIcon from '@mui/icons-material/StarBorder';
 import { useGetStudentsQuery } from '@/entities/student/api/studentApi';
 import {
   useUpdateLessonMutation,
@@ -70,6 +72,9 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
   const [endTime, setEndTime] = useState<Dayjs | null>(null);
   const [selectedStudents, setSelectedStudents] = useState<Student[]>([]);
   const [status, setStatus] = useState<LessonStatus>('PLANNED');
+  const [notes, setNotes] = useState<string>('');
+  const [rating, setRating] = useState<number | null>(null);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   const { data: allStudents = [] } = useGetStudentsQuery();
   const { data: settings } = useGetSettingsQuery();
@@ -87,10 +92,16 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
       setStartTime(dayjs(lesson.startTime));
       setEndTime(dayjs(lesson.endTime));
       setStatus(lesson.status);
+      setNotes(lesson.notes ?? '');
+      setRating(lesson.rating ?? null);
 
       const studentIds = lesson.students.map((s) => s.studentId);
       const matched = allStudents.filter((s) => studentIds.includes(s.id));
       setSelectedStudents(matched);
+    } else if (!open) {
+      setNotes('');
+      setRating(null);
+      setHoverRating(null);
     }
   }, [open, lesson, allStudents]);
 
@@ -118,6 +129,8 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         studentIds: selectedStudents.map((s) => s.id),
+        notes: notes.trim() || null,
+        rating,
       },
     });
 
@@ -203,6 +216,47 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
               ))}
             </ToggleButtonGroup>
           </Box>
+
+          {status === 'COMPLETED' && (
+            <>
+              <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+              <TextField
+                label="Нотатки"
+                multiline
+                minRows={2}
+                maxRows={5}
+                fullWidth
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Що пройшли, домашнє завдання..."
+                size="small"
+              />
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography fontSize="0.8rem" sx={{ color: 'rgba(255,255,255,0.5)', mr: 0.5 }}>
+                  Оцінка:
+                </Typography>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Box
+                    key={star}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(null)}
+                    onClick={() => setRating(star === rating ? null : star)}
+                    sx={{
+                      cursor: 'pointer',
+                      color: star <= (hoverRating ?? rating ?? 0) ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                    }}
+                  >
+                    {star <= (hoverRating ?? rating ?? 0) ? (
+                      <StarIcon sx={{ fontSize: 22 }} />
+                    ) : (
+                      <StarBorderIcon sx={{ fontSize: 22 }} />
+                    )}
+                  </Box>
+                ))}
+              </Stack>
+            </>
+          )}
 
           <Divider />
 
