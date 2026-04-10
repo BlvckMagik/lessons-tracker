@@ -145,8 +145,8 @@ export function CreateLessonDialog({
       )
         return;
 
-      const rs = snapToFullHour(recurringStartTime);
-      let re = snapToFullHour(recurringEndTime);
+      const rs = recurringStartTime.second(0).millisecond(0);
+      let re = recurringEndTime.second(0).millisecond(0);
       if (!re.isAfter(rs)) {
         re = rs.add(1, "hour");
       }
@@ -170,8 +170,8 @@ export function CreateLessonDialog({
     } else {
       if (!startTime || !endTime) return;
 
-      const s = snapToFullHour(startTime);
-      let e = snapToFullHour(endTime);
+      const s = startTime.second(0).millisecond(0);
+      let e = endTime.second(0).millisecond(0);
       if (!e.isAfter(s)) {
         e = s.add(1, "hour");
       }
@@ -354,7 +354,6 @@ export function CreateLessonDialog({
                   value={recurringStartTime}
                   onChange={(v) => setRecurringStartTime(v ? v : null)}
                   ampm={false}
-                  minutesStep={5}
                   sx={{ flex: 1 }}
                 />
                 <TimePicker
@@ -362,7 +361,6 @@ export function CreateLessonDialog({
                   value={recurringEndTime}
                   onChange={(v) => setRecurringEndTime(v ? v : null)}
                   ampm={false}
-                  minutesStep={5}
                   sx={{ flex: 1 }}
                 />
               </Stack>
@@ -385,7 +383,6 @@ export function CreateLessonDialog({
                 value={startTime}
                 onChange={(v) => setStartTime(v ? v : null)}
                 ampm={false}
-                minutesStep={5}
                 sx={{ flex: 1 }}
               />
               <DateTimePicker
@@ -393,7 +390,6 @@ export function CreateLessonDialog({
                 value={endTime}
                 onChange={(v) => setEndTime(v ? v : null)}
                 ampm={false}
-                minutesStep={5}
                 sx={{ flex: 1 }}
               />
             </Stack>

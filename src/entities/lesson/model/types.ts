@@ -25,6 +25,9 @@ export interface Lesson {
   recurringLessonId: number | null;
   notes: string | null;
   rating: number | null;
+  homework: string | null;
+  homeworkStatus: string | null;
+  homeworkRating: number | null;
   createdAt: string;
   updatedAt: string;
   students: LessonStudent[];
@@ -47,6 +50,9 @@ export interface UpdateLessonDto {
   status?: LessonStatus;
   notes?: string | null;
   rating?: number | null;
+  homework?: string | null;
+  homeworkStatus?: string | null;
+  homeworkRating?: number | null;
 }
 
 export interface StudentReport {

@@ -38,6 +38,9 @@ model Lesson {
   recurringLessonId Int?
   notes             String?
   rating            Int?
+  homework          String?
+  homeworkStatus    String?
+  homeworkRating    Int?
   reminderSentAt    DateTime?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt

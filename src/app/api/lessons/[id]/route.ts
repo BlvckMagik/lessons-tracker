@@ -27,6 +27,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (body.status) data.status = body.status;
   if (body.notes !== undefined) data.notes = body.notes;
   if (body.rating !== undefined) data.rating = body.rating;
+  if (body.homework !== undefined) data.homework = body.homework;
+  if (body.homeworkStatus !== undefined) data.homeworkStatus = body.homeworkStatus;
+  if (body.homeworkRating !== undefined) data.homeworkRating = body.homeworkRating;
 
   if (body.studentIds) {
     const lessonType = body.type || (await prisma.lesson.findUnique({ where: { id: numId }, select: { type: true } }))?.type || 'INDIVIDUAL';

@@ -75,6 +75,10 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
   const [notes, setNotes] = useState<string>('');
   const [rating, setRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [homework, setHomework] = useState<string>('');
+  const [homeworkStatus, setHomeworkStatus] = useState<string | null>(null);
+  const [homeworkRating, setHomeworkRating] = useState<number | null>(null);
+  const [hoverHomeworkRating, setHoverHomeworkRating] = useState<number | null>(null);
 
   const { data: allStudents = [] } = useGetStudentsQuery();
   const { data: settings } = useGetSettingsQuery();
@@ -94,6 +98,9 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
       setStatus(lesson.status);
       setNotes(lesson.notes ?? '');
       setRating(lesson.rating ?? null);
+      setHomework(lesson.homework ?? '');
+      setHomeworkStatus(lesson.homeworkStatus ?? null);
+      setHomeworkRating(lesson.homeworkRating ?? null);
 
       const studentIds = lesson.students.map((s) => s.studentId);
       const matched = allStudents.filter((s) => studentIds.includes(s.id));
@@ -102,6 +109,10 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
       setNotes('');
       setRating(null);
       setHoverRating(null);
+      setHomework('');
+      setHomeworkStatus(null);
+      setHomeworkRating(null);
+      setHoverHomeworkRating(null);
     }
   }, [open, lesson, allStudents]);
 
@@ -131,6 +142,9 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
         studentIds: selectedStudents.map((s) => s.id),
         notes: notes.trim() || null,
         rating,
+        homework: homework.trim() || null,
+        homeworkStatus,
+        homeworkRating,
       },
     });
 
@@ -228,12 +242,12 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
                 fullWidth
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Що пройшли, домашнє завдання..."
+                placeholder="Що пройшли на уроці..."
                 size="small"
               />
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <Typography fontSize="0.8rem" sx={{ color: 'rgba(255,255,255,0.5)', mr: 0.5 }}>
-                  Оцінка:
+                  Оцінка уроку:
                 </Typography>
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Box
@@ -248,6 +262,107 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
                     }}
                   >
                     {star <= (hoverRating ?? rating ?? 0) ? (
+                      <StarIcon sx={{ fontSize: 22 }} />
+                    ) : (
+                      <StarBorderIcon sx={{ fontSize: 22 }} />
+                    )}
+                  </Box>
+                ))}
+              </Stack>
+
+              <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+
+              <TextField
+                label="Задано"
+                multiline
+                minRows={2}
+                maxRows={5}
+                fullWidth
+                value={homework}
+                onChange={(e) => setHomework(e.target.value)}
+                placeholder="Домашнє завдання..."
+                size="small"
+              />
+
+              <Box>
+                <Typography fontSize="0.8rem" sx={{ color: 'rgba(255,255,255,0.5)', mb: 1 }}>
+                  Виконання ДЗ:
+                </Typography>
+                <ToggleButtonGroup
+                  exclusive
+                  value={homeworkStatus}
+                  onChange={(_e, val) => setHomeworkStatus(val)}
+                  size="small"
+                  sx={{
+                    gap: 0.5,
+                    '& .MuiToggleButton-root': {
+                      borderRadius: '8px !important',
+                      border: `1px solid ${alpha('#fff', 0.1)} !important`,
+                      px: 1.5,
+                      py: 0.75,
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      color: 'rgba(255,255,255,0.4)',
+                    },
+                  }}
+                >
+                  <ToggleButton
+                    value="NOT_DONE"
+                    sx={{
+                      '&.Mui-selected': {
+                        backgroundColor: alpha('#f87171', 0.15),
+                        color: '#f87171',
+                        borderColor: `${alpha('#f87171', 0.3)} !important`,
+                      },
+                    }}
+                  >
+                    Не виконано
+                  </ToggleButton>
+                  <ToggleButton
+                    value="PARTIAL"
+                    sx={{
+                      '&.Mui-selected': {
+                        backgroundColor: alpha('#fbbf24', 0.15),
+                        color: '#fbbf24',
+                        borderColor: `${alpha('#fbbf24', 0.3)} !important`,
+                      },
+                    }}
+                  >
+                    Виконано частково
+                  </ToggleButton>
+                  <ToggleButton
+                    value="DONE"
+                    sx={{
+                      '&.Mui-selected': {
+                        backgroundColor: alpha('#34d399', 0.15),
+                        color: '#34d399',
+                        borderColor: `${alpha('#34d399', 0.3)} !important`,
+                      },
+                    }}
+                  >
+                    Виконано
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <Typography fontSize="0.8rem" sx={{ color: 'rgba(255,255,255,0.5)', mr: 0.5 }}>
+                  Оцінка ДЗ:
+                </Typography>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Box
+                    key={star}
+                    onMouseEnter={() => setHoverHomeworkRating(star)}
+                    onMouseLeave={() => setHoverHomeworkRating(null)}
+                    onClick={() => setHomeworkRating(star === homeworkRating ? null : star)}
+                    sx={{
+                      cursor: 'pointer',
+                      color: star <= (hoverHomeworkRating ?? homeworkRating ?? 0) ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                      display: 'flex',
+                    }}
+                  >
+                    {star <= (hoverHomeworkRating ?? homeworkRating ?? 0) ? (
                       <StarIcon sx={{ fontSize: 22 }} />
                     ) : (
                       <StarBorderIcon sx={{ fontSize: 22 }} />
@@ -299,7 +414,6 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
               value={startTime}
               onChange={setStartTime}
               ampm={false}
-              minutesStep={5}
               sx={{ flex: 1 }}
             />
             <DateTimePicker
@@ -307,7 +421,6 @@ export function EditLessonDialog({ open, onClose, lesson }: Props) {
               value={endTime}
               onChange={setEndTime}
               ampm={false}
-              minutesStep={5}
               sx={{ flex: 1 }}
             />
           </Stack>
