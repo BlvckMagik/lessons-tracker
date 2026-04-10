@@ -71,6 +71,8 @@ const statusChipStyles: Record<string, { bg: string; color: string }> = {
   PLANNED: { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" },
 };
 
+type LessonSortField = 'startTime' | 'subject' | 'type' | 'status' | 'pricePerStudent';
+
 function LessonDetailsTable({
   lessons,
   studentId,
@@ -79,16 +81,57 @@ function LessonDetailsTable({
   studentId: number;
 }) {
   const [updatePayment] = useUpdatePaymentMutation();
+  const [sortField, setSortField] = useState<LessonSortField>('startTime');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const handleSort = (field: LessonSortField) => {
+    if (field === sortField) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDir(field === 'startTime' ? 'desc' : 'asc');
+    }
+  };
+
+  const sorted = useMemo(() => {
+    return [...lessons].sort((a, b) => {
+      let cmp = 0;
+      if (sortField === 'startTime') {
+        cmp = new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+      } else if (sortField === 'pricePerStudent') {
+        cmp = a.pricePerStudent - b.pricePerStudent;
+      } else {
+        cmp = String(a[sortField]).localeCompare(String(b[sortField]));
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [lessons, sortField, sortDir]);
+
+  const col = (field: LessonSortField, label: string, align?: 'right' | 'center') => (
+    <TableCell align={align}>
+      <TableSortLabel
+        active={sortField === field}
+        direction={sortField === field ? sortDir : 'asc'}
+        onClick={() => handleSort(field)}
+        sx={{
+          '& .MuiTableSortLabel-icon': { fontSize: 14 },
+          justifyContent: align === 'right' ? 'flex-end' : undefined,
+        }}
+      >
+        {label}
+      </TableSortLabel>
+    </TableCell>
+  );
 
   return (
     <Table size="small">
       <TableHead>
         <TableRow>
-          <TableCell>Дата</TableCell>
-          <TableCell>Предмет</TableCell>
-          <TableCell>Тип</TableCell>
-          <TableCell>Статус</TableCell>
-          <TableCell align="right">Ціна</TableCell>
+          {col('startTime', 'Дата')}
+          {col('subject', 'Предмет')}
+          {col('type', 'Тип')}
+          {col('status', 'Статус')}
+          {col('pricePerStudent', 'Ціна', 'right')}
           <TableCell align="center">Нараховано</TableCell>
           <TableCell align="center">Оплачено</TableCell>
           <TableCell sx={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', py: 0.75 }}>
@@ -97,7 +140,7 @@ function LessonDetailsTable({
         </TableRow>
       </TableHead>
       <TableBody>
-        {lessons.map((lesson) => {
+        {sorted.map((lesson) => {
           const style =
             statusChipStyles[lesson.status] || statusChipStyles.PLANNED;
           return (
