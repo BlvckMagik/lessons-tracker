@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { Stack, Button, Chip, alpha, Fade, Typography, Box, IconButton, Tooltip } from '@mui/material';
+import { LessonNotesStep } from '@/features/lessonNotes/ui/lessonNotesStep';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EventBusyIcon from '@mui/icons-material/EventBusy';
@@ -159,6 +161,7 @@ function StudentStatusRow({ ls, lessonId }: { ls: LessonStudent; lessonId: numbe
 
 export function LessonStatusButtons({ lesson }: Props) {
   const [updateStatus, { isLoading }] = useUpdateLessonStatusMutation();
+  const [showNotes, setShowNotes] = useState(false);
   const isGroup = lesson.type === LESSON_TYPES.GROUP;
 
   if (isGroup) {
@@ -213,9 +216,19 @@ export function LessonStatusButtons({ lesson }: Props) {
   }
 
   return (
-    <StatusButtons
-      onSelect={(status) => updateStatus({ id: lesson.id, status })}
-      isLoading={isLoading}
-    />
+    <Stack spacing={1}>
+      <StatusButtons
+        onSelect={async (status) => {
+          await updateStatus({ id: lesson.id, status });
+          if (status === LESSON_STATUSES.COMPLETED) {
+            setShowNotes(true);
+          }
+        }}
+        isLoading={isLoading}
+      />
+      {showNotes && (
+        <LessonNotesStep lessonId={lesson.id} onDone={() => setShowNotes(false)} />
+      )}
+    </Stack>
   );
 }
