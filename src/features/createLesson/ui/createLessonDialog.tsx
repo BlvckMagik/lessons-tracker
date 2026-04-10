@@ -352,21 +352,17 @@ export function CreateLessonDialog({
                 <TimePicker
                   label="Початок"
                   value={recurringStartTime}
-                  onChange={(v) =>
-                    setRecurringStartTime(v ? snapToFullHour(v) : null)
-                  }
+                  onChange={(v) => setRecurringStartTime(v ? v : null)}
                   ampm={false}
-                  minutesStep={60}
+                  minutesStep={5}
                   sx={{ flex: 1 }}
                 />
                 <TimePicker
                   label="Кінець"
                   value={recurringEndTime}
-                  onChange={(v) =>
-                    setRecurringEndTime(v ? snapToFullHour(v) : null)
-                  }
+                  onChange={(v) => setRecurringEndTime(v ? v : null)}
                   ampm={false}
-                  minutesStep={60}
+                  minutesStep={5}
                   sx={{ flex: 1 }}
                 />
               </Stack>
@@ -387,17 +383,17 @@ export function CreateLessonDialog({
               <DateTimePicker
                 label="Початок"
                 value={startTime}
-                onChange={(v) => setStartTime(v ? snapToFullHour(v) : null)}
+                onChange={(v) => setStartTime(v ? v : null)}
                 ampm={false}
-                minutesStep={60}
+                minutesStep={5}
                 sx={{ flex: 1 }}
               />
               <DateTimePicker
                 label="Кінець"
                 value={endTime}
-                onChange={(v) => setEndTime(v ? snapToFullHour(v) : null)}
+                onChange={(v) => setEndTime(v ? v : null)}
                 ampm={false}
-                minutesStep={60}
+                minutesStep={5}
                 sx={{ flex: 1 }}
               />
             </Stack>
