@@ -12,7 +12,10 @@ import type {
   EventDropArg,
   EventContentArg,
 } from "@fullcalendar/core";
-import type { DateClickArg, EventResizeDoneArg } from "@fullcalendar/interaction";
+import type {
+  DateClickArg,
+  EventResizeDoneArg,
+} from "@fullcalendar/interaction";
 import type { DatesSetArg } from "@fullcalendar/core";
 import {
   Box,
@@ -170,7 +173,9 @@ export function LessonCalendar() {
   const [updateLesson] = useUpdateLessonMutation();
   const { scheduleDelete } = useDeferredDelete();
   const dispatch = useAppDispatch();
-  const navigateRequest = useAppSelector((s) => s.calendarNavigation.navigateRequest);
+  const navigateRequest = useAppSelector(
+    (s) => s.calendarNavigation.navigateRequest,
+  );
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<{
@@ -236,7 +241,15 @@ export function LessonCalendar() {
   const renderEventContent = useCallback((arg: EventContentArg) => {
     const lesson = arg.event.extendedProps.lesson as Lesson;
     return (
-      <Box sx={{ position: "relative", width: "100%", overflow: "hidden", px: "4px", py: "2px" }}>
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          overflow: "hidden",
+          px: "4px",
+          py: "2px",
+        }}
+      >
         {lesson.label && (
           <Box
             sx={{
@@ -262,11 +275,22 @@ export function LessonCalendar() {
           </Box>
         )}
         {arg.timeText && (
-          <div className="fc-event-time" style={{ fontSize: "0.72rem", opacity: 0.8 }}>
+          <div
+            className="fc-event-time"
+            style={{ fontSize: "0.72rem", opacity: 0.8 }}
+          >
             {arg.timeText}
           </div>
         )}
-        <div className="fc-event-title" style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <div
+          className="fc-event-title"
+          style={{
+            fontWeight: 500,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
           {arg.event.title}
         </div>
       </Box>
@@ -697,7 +721,10 @@ export function LessonCalendar() {
               <>
                 <Divider sx={{ my: 1.5 }} />
                 <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <Typography fontSize="0.72rem" sx={{ color: "rgba(255,255,255,0.4)", mr: 0.5 }}>
+                  <Typography
+                    fontSize="0.72rem"
+                    sx={{ color: "rgba(255,255,255,0.4)", mr: 0.5 }}
+                  >
                     Оцінка:
                   </Typography>
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -708,12 +735,18 @@ export function LessonCalendar() {
                       onClick={() =>
                         updateLesson({
                           id: selectedLesson.id,
-                          data: { rating: star === selectedLesson.rating ? null : star },
+                          data: {
+                            rating:
+                              star === selectedLesson.rating ? null : star,
+                          },
                         })
                       }
                       sx={{
                         cursor: "pointer",
-                        color: star <= (hoverRating ?? selectedLesson.rating ?? 0) ? "#fbbf24" : "rgba(255,255,255,0.2)",
+                        color:
+                          star <= (hoverRating ?? selectedLesson.rating ?? 0)
+                            ? "#fbbf24"
+                            : "rgba(255,255,255,0.2)",
                         display: "flex",
                       }}
                     >
