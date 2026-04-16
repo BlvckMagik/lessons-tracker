@@ -3,27 +3,31 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
+RUN npm install -g pnpm
+
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-# Use npm in Docker to avoid pnpm virtual store issues with Prisma
-RUN npm install --legacy-peer-deps
+# shamefully-hoist flattens node_modules so .prisma ends up at the root
+RUN pnpm install --frozen-lockfile --shamefully-hoist
 
 # ── Stage 2: builder ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 RUN apk add --no-cache openssl
 WORKDIR /app
 
+RUN npm install -g pnpm
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN npx prisma generate
+RUN pnpm prisma generate
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 
-RUN npx next build
+RUN pnpm next build
 
 # Copy Prisma client into standalone output
 RUN cp -r node_modules/.prisma .next/standalone/node_modules/ && \
