@@ -9,7 +9,9 @@ COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
 # shamefully-hoist flattens node_modules so .prisma ends up at the root
-RUN pnpm install --frozen-lockfile --shamefully-hoist
+# node-linker=hoisted writes real files (not symlinks) — needed for Docker COPY
+RUN echo "node-linker=hoisted" >> .npmrc && \
+    pnpm install --frozen-lockfile
 
 # ── Stage 2: builder ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
