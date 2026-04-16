@@ -27,7 +27,7 @@ ENV NODE_ENV=production
 # Dummy DB URL so build doesn't fail (no real DB needed at build time)
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 
-RUN pnpm build
+RUN pnpm next build
 
 # ── Stage 3: runner ────────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
