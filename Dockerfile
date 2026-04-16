@@ -3,32 +3,29 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-RUN npm install -g pnpm
-
 COPY package.json pnpm-lock.yaml ./
 COPY prisma ./prisma/
 
-RUN pnpm install --frozen-lockfile
+# Use npm in Docker to avoid pnpm virtual store issues with Prisma
+RUN npm install --legacy-peer-deps
 
 # ── Stage 2: builder ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS builder
 RUN apk add --no-cache openssl
 WORKDIR /app
 
-RUN npm install -g pnpm
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN pnpm prisma generate
+RUN npx prisma generate
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
 
-RUN pnpm next build
+RUN npx next build
 
-# Copy Prisma client into the standalone output so it's available at runtime
+# Copy Prisma client into standalone output
 RUN cp -r node_modules/.prisma .next/standalone/node_modules/ && \
     cp -r node_modules/@prisma .next/standalone/node_modules/ && \
     cp -r node_modules/prisma .next/standalone/node_modules/
@@ -44,15 +41,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
-# Standalone output (already includes Prisma client)
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-# Prisma schema (needed for db push at runtime)
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Entrypoint
 COPY --chown=nextjs:nodejs entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
