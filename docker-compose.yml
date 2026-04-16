@@ -13,7 +13,8 @@ services:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lessons} -d ${POSTGRES_DB:-lessons_tracker}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
 
   migrate:
     build:
@@ -44,6 +45,16 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+
+  adminer:
+    image: adminer:latest
+    container_name: lessons-tracker-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   postgres_data:
